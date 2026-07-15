@@ -286,7 +286,7 @@ let audioState = {
   utterance: null
 };
 
-function initAudio(arabic, latin) {
+function initAudio(arabic, latin, terjemahan) {
   if (!('speechSynthesis' in window)) {
     console.log('Speech synthesis not supported');
     return;
@@ -295,15 +295,29 @@ function initAudio(arabic, latin) {
   // Cancel any ongoing speech
   speechSynthesis.cancel();
 
-  audioState.utterance = new SpeechSynthesisUtterance(arabic + '. ' + latin);
+  // Combine all texts: Arabic + Latin + Indonesian translation
+  const fullText = arabic + '. ' + latin + '. Arti: ' + terjemahan;
+
+  audioState.utterance = new SpeechSynthesisUtterance(fullText);
   audioState.utterance.lang = 'ar-SA';
   audioState.utterance.rate = audioState.speed;
 
-  // Try to find Arabic voice
+  // Try to find Arabic voice first, then Indonesian
   const voices = speechSynthesis.getVoices();
-  const arabicVoice = voices.find(v => v.lang.includes('ar'));
-  if (arabicVoice) {
-    audioState.utterance.voice = arabicVoice;
+  let selectedVoice = voices.find(v => v.lang.includes('ar'));
+
+  // If no Arabic voice, try Indonesian voice
+  if (!selectedVoice) {
+    selectedVoice = voices.find(v => v.lang.includes('id')) || voices.find(v => v.lang.includes('ms'));
+  }
+
+  // Fallback to any available voice
+  if (!selectedVoice) {
+    selectedVoice = voices[0];
+  }
+
+  if (selectedVoice) {
+    audioState.utterance.voice = selectedVoice;
   }
 
   audioState.utterance.onend = () => {
@@ -317,7 +331,7 @@ function initAudio(arabic, latin) {
   };
 }
 
-function togglePlay(arabic, latin) {
+function togglePlay(arabic, latin, terjemahan) {
   if (!('speechSynthesis' in window)) {
     showToast('Browser tidak mendukung audio', 'error');
     return;
@@ -328,7 +342,7 @@ function togglePlay(arabic, latin) {
     audioState.isPlaying = false;
   } else {
     if (!audioState.utterance) {
-      initAudio(arabic, latin);
+      initAudio(arabic, latin, terjemahan);
     }
     speechSynthesis.speak(audioState.utterance);
     audioState.isPlaying = true;
@@ -389,10 +403,10 @@ function renderDetailPage() {
   const isFav = App.favorites.includes(doa.id);
   const status = App.progress[doa.id] || '';
 
-  app.innerHTML = '<div class="doa-detail"><div class="doa-detail-header"><button class="doa-detail-back" onclick="navigateTo(\'list\')">←</button><button class="favorite-btn ' + (isFav ? 'active' : '') + '" onclick="toggleFavorite(' + doa.id + ')">⭐</button><div class="doa-detail-illustration">' + getCategoryIcon(doa.kategori) + '</div><h1 class="doa-detail-title">' + doa.nama + '</h1><span class="doa-detail-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div><div class="doa-content"><div class="doa-arab-section"><div class="doa-arab">' + doa.arab + '</div><div class="doa-latin"><em>' + doa.latin + '</em></div></div><div class="audio-player-section"><div class="audio-controls"><button class="audio-btn" id="playAudioBtn" onclick="togglePlay(\'' + escapeForJS(doa.arab) + '\', \'' + escapeForJS(doa.latin) + '\')">▶️</button><button class="audio-btn-small" onclick="changeSpeed()" id="speedBtn">1x</button><button class="audio-btn-small" onclick="stopAudio()">⏹️</button></div></div><div class="doa-translation"><h4>📜 Terjemahan</h4><p>' + doa.terjemahan + '</p></div><div class="doa-info"><div class="info-card"><div class="info-card-header">💡 Hikmah</div><div class="info-card-content">' + (doa.hikmah || '-') + '</div></div><div class="info-card"><div class="info-card-header">⏰ Kapan Dibaca</div><div class="info-card-content">' + (doa.kapanDibaca || '-') + '</div></div><div class="info-card"><div class="info-card-header">📚 Sumber</div><div class="info-card-content">' + (doa.sumber || '-') + '</div></div></div><div class="status-buttons"><button class="status-btn ' + (status === 'learning' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'learning\')"><span class="status-icon">📖</span><span class="status-label">Sedang Dipelajari</span></button><button class="status-btn ' + (status === 'memorized' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'memorized\')"><span class="status-icon">🎯</span><span class="status-label">Sudah Hafal</span></button></div></div></div>';
+  app.innerHTML = '<div class="doa-detail"><div class="doa-detail-header"><button class="doa-detail-back" onclick="navigateTo(\'list\')">←</button><button class="favorite-btn ' + (isFav ? 'active' : '') + '" onclick="toggleFavorite(' + doa.id + ')">⭐</button><div class="doa-detail-illustration">' + getCategoryIcon(doa.kategori) + '</div><h1 class="doa-detail-title">' + doa.nama + '</h1><span class="doa-detail-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div><div class="doa-content"><div class="doa-arab-section"><div class="doa-arab">' + doa.arab + '</div><div class="doa-latin"><em>' + doa.latin + '</em></div></div><div class="audio-player-section"><div class="audio-controls"><button class="audio-btn" id="playAudioBtn" onclick="togglePlay(\'' + escapeForJS(doa.arab) + '\', \'' + escapeForJS(doa.latin) + '\', \'' + escapeForJS(doa.terjemahan) + '\')">▶️</button><button class="audio-btn-small" onclick="changeSpeed()" id="speedBtn">1x</button><button class="audio-btn-small" onclick="stopAudio()">⏹️</button></div><p class="audio-hint">Arab - Latin - Indonesia</p></div><div class="doa-translation"><h4>📜 Terjemahan</h4><p>' + doa.terjemahan + '</p></div><div class="doa-info"><div class="info-card"><div class="info-card-header">💡 Hikmah</div><div class="info-card-content">' + (doa.hikmah || '-') + '</div></div><div class="info-card"><div class="info-card-header">⏰ Kapan Dibaca</div><div class="info-card-content">' + (doa.kapanDibaca || '-') + '</div></div><div class="info-card"><div class="info-card-header">📚 Sumber</div><div class="info-card-content">' + (doa.sumber || '-') + '</div></div></div><div class="status-buttons"><button class="status-btn ' + (status === 'learning' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'learning\')"><span class="status-icon">📖</span><span class="status-label">Sedang Dipelajari</span></button><button class="status-btn ' + (status === 'memorized' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'memorized\')"><span class="status-icon">🎯</span><span class="status-label">Sudah Hafal</span></button></div></div></div>';
 
   // Initialize audio with this doa
-  initAudio(doa.arab, doa.latin);
+  initAudio(doa.arab, doa.latin, doa.terjemahan);
 }
 
 function escapeForJS(str) {
