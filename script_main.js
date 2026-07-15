@@ -278,6 +278,96 @@ function renderDoaList(searchQuery = '') {
 }
 
 // ================================================
+// Audio Player
+// ================================================
+let audioState = {
+  isPlaying: false,
+  speed: 1,
+  utterance: null
+};
+
+function initAudio(arabic, latin) {
+  if (!('speechSynthesis' in window)) {
+    console.log('Speech synthesis not supported');
+    return;
+  }
+
+  // Cancel any ongoing speech
+  speechSynthesis.cancel();
+
+  audioState.utterance = new SpeechSynthesisUtterance(arabic + '. ' + latin);
+  audioState.utterance.lang = 'ar-SA';
+  audioState.utterance.rate = audioState.speed;
+
+  // Try to find Arabic voice
+  const voices = speechSynthesis.getVoices();
+  const arabicVoice = voices.find(v => v.lang.includes('ar'));
+  if (arabicVoice) {
+    audioState.utterance.voice = arabicVoice;
+  }
+
+  audioState.utterance.onend = () => {
+    audioState.isPlaying = false;
+    updateAudioUI();
+  };
+
+  audioState.utterance.onerror = () => {
+    audioState.isPlaying = false;
+    updateAudioUI();
+  };
+}
+
+function togglePlay(arabic, latin) {
+  if (!('speechSynthesis' in window)) {
+    showToast('Browser tidak mendukung audio', 'error');
+    return;
+  }
+
+  if (audioState.isPlaying) {
+    speechSynthesis.pause();
+    audioState.isPlaying = false;
+  } else {
+    if (!audioState.utterance) {
+      initAudio(arabic, latin);
+    }
+    speechSynthesis.speak(audioState.utterance);
+    audioState.isPlaying = true;
+  }
+  updateAudioUI();
+}
+
+function stopAudio() {
+  speechSynthesis.cancel();
+  audioState.isPlaying = false;
+  audioState.utterance = null;
+  updateAudioUI();
+}
+
+function changeSpeed() {
+  const speeds = [0.5, 0.75, 1, 1.25, 1.5];
+  const currentIndex = speeds.indexOf(audioState.speed);
+  audioState.speed = speeds[(currentIndex + 1) % speeds.length];
+
+  if (audioState.utterance) {
+    audioState.utterance.rate = audioState.speed;
+  }
+
+  updateAudioUI();
+}
+
+function updateAudioUI() {
+  const playBtn = document.getElementById('playAudioBtn');
+  const speedBtn = document.getElementById('speedBtn');
+
+  if (playBtn) {
+    playBtn.innerHTML = audioState.isPlaying ? '⏸️' : '▶️';
+  }
+  if (speedBtn) {
+    speedBtn.textContent = audioState.speed + 'x';
+  }
+}
+
+// ================================================
 // Detail Page
 // ================================================
 let currentDoaId = null;
@@ -285,18 +375,28 @@ let currentDoaId = null;
 function showDoaDetail(id) {
   currentDoaId = id;
   App.currentDoa = App.doaList.find(d => d.id === id);
-  if (App.currentDoa) renderDetailPage();
+  if (App.currentDoa) {
+    stopAudio(); // Stop previous audio
+    renderDetailPage();
+  }
 }
 
 function renderDetailPage() {
   const app = document.getElementById('app');
   const doa = App.currentDoa;
   if (!app || !doa) return;
-  
+
   const isFav = App.favorites.includes(doa.id);
   const status = App.progress[doa.id] || '';
-  
-  app.innerHTML = '<div class="doa-detail"><div class="doa-detail-header"><button class="doa-detail-back" onclick="navigateTo(\'list\')">←</button><button class="favorite-btn ' + (isFav ? 'active' : '') + '" onclick="toggleFavorite(' + doa.id + ')">⭐</button><div class="doa-detail-illustration">' + getCategoryIcon(doa.kategori) + '</div><h1 class="doa-detail-title">' + doa.nama + '</h1><span class="doa-detail-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div><div class="doa-content"><div class="doa-arab-section"><div class="doa-arab">' + doa.arab + '</div><div class="doa-latin"><em>' + doa.latin + '</em></div></div><div class="doa-translation"><h4>📜 Terjemahan</h4><p>' + doa.terjemahan + '</p></div><div class="doa-info"><div class="info-card"><div class="info-card-header">💡 Hikmah</div><div class="info-card-content">' + (doa.hikmah || '-') + '</div></div><div class="info-card"><div class="info-card-header">⏰ Kapan Dibaca</div><div class="info-card-content">' + (doa.kapanDibaca || '-') + '</div></div><div class="info-card"><div class="info-card-header">📚 Sumber</div><div class="info-card-content">' + (doa.sumber || '-') + '</div></div></div><div class="status-buttons"><button class="status-btn ' + (status === 'learning' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'learning\')"><span class="status-icon">📖</span><span class="status-label">Sedang Dipelajari</span></button><button class="status-btn ' + (status === 'memorized' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'memorized\')"><span class="status-icon">🎯</span><span class="status-label">Sudah Hafal</span></button></div></div></div>';
+
+  app.innerHTML = '<div class="doa-detail"><div class="doa-detail-header"><button class="doa-detail-back" onclick="navigateTo(\'list\')">←</button><button class="favorite-btn ' + (isFav ? 'active' : '') + '" onclick="toggleFavorite(' + doa.id + ')">⭐</button><div class="doa-detail-illustration">' + getCategoryIcon(doa.kategori) + '</div><h1 class="doa-detail-title">' + doa.nama + '</h1><span class="doa-detail-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div><div class="doa-content"><div class="doa-arab-section"><div class="doa-arab">' + doa.arab + '</div><div class="doa-latin"><em>' + doa.latin + '</em></div></div><div class="audio-player-section"><div class="audio-controls"><button class="audio-btn" id="playAudioBtn" onclick="togglePlay(\'' + escapeForJS(doa.arab) + '\', \'' + escapeForJS(doa.latin) + '\')">▶️</button><button class="audio-btn-small" onclick="changeSpeed()" id="speedBtn">1x</button><button class="audio-btn-small" onclick="stopAudio()">⏹️</button></div></div><div class="doa-translation"><h4>📜 Terjemahan</h4><p>' + doa.terjemahan + '</p></div><div class="doa-info"><div class="info-card"><div class="info-card-header">💡 Hikmah</div><div class="info-card-content">' + (doa.hikmah || '-') + '</div></div><div class="info-card"><div class="info-card-header">⏰ Kapan Dibaca</div><div class="info-card-content">' + (doa.kapanDibaca || '-') + '</div></div><div class="info-card"><div class="info-card-header">📚 Sumber</div><div class="info-card-content">' + (doa.sumber || '-') + '</div></div></div><div class="status-buttons"><button class="status-btn ' + (status === 'learning' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'learning\')"><span class="status-icon">📖</span><span class="status-label">Sedang Dipelajari</span></button><button class="status-btn ' + (status === 'memorized' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'memorized\')"><span class="status-icon">🎯</span><span class="status-label">Sudah Hafal</span></button></div></div></div>';
+
+  // Initialize audio with this doa
+  initAudio(doa.arab, doa.latin);
+}
+
+function escapeForJS(str) {
+  return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
 
 function toggleFavorite(id) {
@@ -316,14 +416,14 @@ function setDoaStatus(id, status) {
   const prev = App.progress[id];
   App.progress[id] = status;
   saveProgress();
-  
+
   if (status === 'memorized' && prev !== 'memorized') {
     App.xp = (App.xp || 0) + 10;
     saveXP();
     showConfetti();
     showToast('Selamat! +10 XP', 'success');
   }
-  
+
   if (App.currentDoa) renderDetailPage();
 }
 
