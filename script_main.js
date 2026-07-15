@@ -135,7 +135,7 @@ function renderHomePage() {
   const memorized = Object.keys(App.progress).filter(id => App.progress[id] === 'memorized').length;
   const total = App.doaList.length;
   
-  app.innerHTML = '<div class="main-content"><div class="hero-section animate-fade-in"><div class="hero-illustration">👦👧</div><h1 class="hero-title">Doa Harian Anak Indonesia</h1><p class="hero-subtitle">Ayo Belajar Doa Setiap Hari</p></div><div class="stats-bar animate-slide-up"><div class="stat-item"><div class="stat-value">' + memorized + '</div><div class="stat-label">Sudah Hafal</div></div><div class="stat-item"><div class="stat-value">' + total + '</div><div class="stat-label">Total Doa</div></div><div class="stat-item"><div class="stat-value">' + (App.favorites?.length || 0) + '</div><div class="stat-label">Favorit</div></div></div><div class="section-title"><h2>Pilih Kategori</h2></div><div class="grid-container stagger" id="menuGrid"></div></div>';
+  app.innerHTML = '<div class="main-content"><div class="hero-section animate-fade-in"><div class="hero-illustration">👦👧</div><h1 class="hero-title">Doa Harian Anak Indonesia</h1><p class="hero-subtitle">Ayo Belajar Doa Setiap Hari</p></div><div class="stats-bar"><div class="stat-item"><div class="stat-value">' + memorized + '</div><div class="stat-label">Sudah Hafal</div></div><div class="stat-item"><div class="stat-value">' + total + '</div><div class="stat-label">Total Doa</div></div><div class="stat-item"><div class="stat-value">' + (App.favorites?.length || 0) + '</div><div class="stat-label">Favorit</div></div></div><div class="section-title"><h2>Pilih Kategori</h2></div><div class="grid-container" id="menuGrid"></div></div>';
   
   const grid = document.getElementById('menuGrid');
   if (!grid) return;
