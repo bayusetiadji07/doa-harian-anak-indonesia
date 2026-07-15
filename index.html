@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Doa Harian Anak Indonesia - Aplikasi edukasi doa untuk anak Indonesia dengan gamifikasi">
+  <meta name="keywords" content="doa, anak, islam, edukasi, hafalan, belajar">
+  <meta name="author" content="Doa Harian Indonesia">
+  <meta name="theme-color" content="#6B9DFC">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Doa Harian">
+  
+  <title>Doa Harian Anak Indonesia</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/icons/icon-192x192.png">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+  
+  <style>
+    /* Splash Screen */
+    .splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #6B9DFC 0%, #7ED6A3 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease;
+    }
+    
+    .splash-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .splash-logo {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      animation: bounce 2s ease infinite;
+    }
+    
+    .splash-title {
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+    
+    .splash-subtitle {
+      color: rgba(255,255,255,0.8);
+      font-size: 1rem;
+    }
+    
+    .splash-loader {
+      margin-top: 2rem;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div class="splash-screen" id="splashScreen">
+    <div class="splash-logo">📿</div>
+    <h1 class="splash-title">Doa Harian</h1>
+    <p class="splash-subtitle">Anak Indonesia</p>
+    <div class="splash-loader"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="header" id="header">
+    <div class="header-content">
+      <div class="header-logo">
+        <span style="font-size: 1.5rem;">📿</span>
+        <span class="header-title">Doa Harian</span>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="navigateTo('progress')" title="Progress">📈</button>
+        <button class="icon-btn" onclick="navigateTo('settings')" title="Pengaturan">⚙</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main App Container -->
+  <main class="app-container" id="app">
+    <!-- Content will be rendered here -->
+    <div class="main-content">
+      <div class="loading-spinner"></div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" id="bottomNav">
+    <div class="nav-item active" data-page="home">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Beranda</span>
+    </div>
+    <div class="nav-item" data-page="list">
+      <span class="nav-icon">📚</span>
+      <span class="nav-label">Doa</span>
+    </div>
+    <div class="nav-item" data-page="quiz">
+      <span class="nav-icon">📝</span>
+      <span class="nav-label">Quiz</span>
+    </div>
+    <div class="nav-item" data-page="game">
+      <span class="nav-icon">🎮</span>
+      <span class="nav-label">Game</span>
+    </div>
+    <div class="nav-item" data-page="progress">
+      <span class="nav-icon">📈</span>
+      <span class="nav-label">Progress</span>
+    </div>
+  </nav>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script>
+    // Quiz Questions
+    const QUIZ_QUESTIONS = [
+      {question:"Apa doa sebelum makan?",correct:"Bismillahi wa barakatillah",options:["Bismillahi wa barakatillah","Alhamdulillah","Allahumma barik lana","Robbana atina"]},
+      {question:"Doa bangun tidur HR?",correct:"HR. Bukhari",options:["HR. Bukhari","HR. Muslim","HR. Tirmidzi","HR. Abu Daud"]},
+      {question:"Arti Bismillahi wa barakatillah?",correct:"Dengan nama Allah dan berkah Allah",options:["Segala puji bagi Allah","Dengan nama Allah","Dengan nama Allah dan berkah Allah","Ya Allah"]},
+      {question:"Kapan doa sebelum tidur dibaca?",correct:"Sebelum tidur di malam hari",options:["Sebelum makan","Sebelum tidur di malam hari","Setelah bangun tidur","Sebelum sholat"]},
+      {question:"Doa masuk kamar mandi?",correct:"Allahumma inni audzu bika",options:["Bismillah","Allahumma inni audzu bika","Subhanallah","Alhamdulillah"]},
+      {question:"Doa sesudah wudhu?",correct:"Asyhadu an laa ilaaha illallah",options:["Bismillah","Asyhadu an laa ilaaha illallah","Subhanallah","Laa ilaaha illallah"]},
+      {question:"Doa keluar rumah?",correct:"Bismillahi tawakkaltu alallah",options:["Bismillahi tawakkaltu alallah","Allahumma infa nii","Rabbi zidnii ilman","Subhanalladzi asra"]},
+      {question:"Saat mendengar adzan?",correct:"Asyhadu an laa ilaaha illallah",options:["Alhamdulillah","Asyhadu an laa ilaaha illallah","Subhanallah","Allahu Akbar"]},
+      {question:"Doa masuk masjid?",correct:"Allahummaftah lii abwaaba rahmatik",options:["Bismillah","Allahummaftah lii abwaaba rahmatik","Subhanallah","Alhamdulillah"]},
+      {question:"Sebelum baca Al-Quran?",correct:"Audzu billahi minasy syaithanir rajiim",options:["Bismillah","Audzu billahi minasy syaithanir rajiim","Alhamdulillah","Subhanallah"]},
+      {question:"Doa saat hujan?",correct:"Allahumma shoyyiban nafi an",options:["Allahumma shoyyiban nafi an","Subhanalladzi yusabbihur ra du","Alhamdulillah","Bismillah"]},
+      {question:"Doa ketika bersin?",correct:"Alhamdulillah",options:["Alhamdulillah","Subhanallah","Laa ilaaha illallah","Allahu Akbar"]},
+      {question:"Doa untuk orang tua?",correct:"Rabbi irhamhumaa kamaa rabbayaani",options:["Rabbi irhamhumaa","Allahumma barik","Rabbi zidnii ilman","Allahumma infa nii"]},
+      {question:"Arti Al-Fatihah?",correct:"Pembuka",options:["Penutup","Pembuka","Surat","Ayat"]},
+      {question:"Al-Ikhlas tentang?",correct:"Keesaan Allah",options:["Keesaan Allah","Kasih sayang","Keadilan","Kebijaksanaan"]},
+      {question:"Dzikir pagi dimulai?",correct:"Ashbahnaa",options:["Amsainaa","Ashbahnaa","Alhamdulillah","Subhanallah"]},
+      {question:"Doa memohon ilmu?",correct:"Allahumma inni as-aluka ilman nafi an",options:["Allahumma infa nii","Allahumma inni as-aluka ilman nafi an","Rabbi zidnii ilman","Allahumma barik"]},
+      {question:"Doa saat marah?",correct:"Audzu billahi minal syaithanir rajiim",options:["Alhamdulillah","Audzu billahi minal syaithanir rajiim","Subhanallah","Laa ilaaha illallah"]},
+      {question:"Ayat Kursi di surah?",correct:"Al-Baqarah ayat 255",options:["Al-Baqarah ayat 255","Al-Ikhlas","Al-Fatihah","An-Nas"]},
+      {question:"Arti Kafaratul Majelis?",correct:"Menutup majelis dengan tasbih",options:["Membuka majelis","Menutup majelis dengan tasbih","Memulai majelis","Mengakhiri majelis"]}
+    ];
+  </script>
+  <script src="script_main.js"></script>
+  
+  <!-- Splash Screen Handler -->
+  <script>
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        document.getElementById('splashScreen').classList.add('hidden');
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
