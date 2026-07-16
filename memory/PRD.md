@@ -1,117 +1,56 @@
 # Doa Harian Anak Indonesia — PRD
 
 ## Original Problem Statement
-GitHub: https://github.com/bayusetiadji07/doa-harian-anak-indonesia
-Live: https://doa-harian-anak-indonesia.vercel.app/
+User meminta pengecekan repo GitHub `bayusetiadji07/doa-harian-anak-indonesia` — sebuah Progressive Web App (PWA) edukasi Islam untuk anak usia 5–12 tahun, kemudian melanjutkan dengan implementasi 2 fitur:
+1. **Tebak Doa** — game pilihan ganda (terjemahan → tebak nama doa). Merupakan satu-satunya game yang masih berstatus "Segera hadir".
+2. **Prerecorded Arabic Audio** — audio Arab hasil generate OpenAI TTS untuk semua 56 doa.
 
-Session tasks (2026-01-16):
-1. Cek repo & fix identified issues
-2. Full UI redesign with attached custom assets (elegant Islamic aesthetic)
-3. Custom AI-generated illustrations per doa + implement Puzzle game
+## Tech Stack
+- Frontend static: HTML5 + Vanilla JS (ES6+) + Modern CSS + PWA (service-worker)
+- Storage: LocalStorage (tidak ada backend)
+- Audio: HTMLAudioElement (MP3 prerecorded) + Web Speech API fallback
+- Generator: `scripts/generate_audio.py` → `emergentintegrations.llm.openai.OpenAITextToSpeech`
 
-## Application Type
-Progressive Web App (PWA) — vanilla HTML/CSS/JavaScript. Islamic educational app for Indonesian children age 5-12.
+## What's Been Implemented (2026-01-15)
 
-## Design System (v3 — Elegant Islamic)
-- **Palette**: Emerald + Gold + Cream (from masjid asset & Islamic calligraphy)
-- **Typography**: Fraunces (italic serif) + Plus Jakarta Sans (body) + Amiri Quran (Arabic)
-- **Illustrations**: 3D-render cartoon style, generated with Gemini Nano Banana
+### A. Tebak Doa Game
+- Kartu "Tebak Doa" di Game page aktif (sebelumnya "Segera hadir")
+- 10 soal pilihan ganda per sesi
+- Terjemahan Indonesia + label kategori → 4 pilihan nama doa (1 benar, 3 distractor acak)
+- Feedback: opsi benar hijau, salah merah + jawaban benar tetap tampil
+- Reward: **+15 XP per jawaban benar**, confetti bila skor ≥ 60%
+- Result screen: persentase, tombol Main Lagi / Kembali
+- Data-testid lengkap untuk semua elemen interaktif
 
-## Assets Bank
-- `assets/characters/boy.webp` (22KB) — Ahmad
-- `assets/characters/girl.webp` (19KB) — Anisa
-- `assets/scenes/{night-village,masjid,study-room}.webp`
-- `assets/doa/{1..56}.webp` — **AI-generated illustrations per doa** (3.2MB total, avg 57KB each)
+### B. Prerecorded Arabic Audio (56/56 doa)
+- Script `/app/scripts/generate_audio.py` — pakai `emergentintegrations` + EMERGENT_LLM_KEY
+- Model: `tts-1-hd`, voice: `shimmer`, speed 0.9x
+- Output: `/app/assets/audio/1.mp3` … `56.mp3` (total ~9.5 MB)
+- Player logic:
+  - Priority: MP3 (Arab) → setelah selesai chain ke TTS Latin + Terjemahan
+  - Auto-fallback ke Web Speech API bila MP3 gagal
+  - Speed 0.5x–1.5x berlaku untuk MP3 (`playbackRate`) dan TTS (`rate`)
+- Service Worker v3 → **v4** + `AUDIO_CACHE` terpisah, cache-first untuk `/assets/audio/*`
 
-## What's Been Implemented
+## Testing Status (all ✅)
+- Home render, Game page 3 kartu aktif, Tebak Doa flow (round 1 → 2 → ...)
+- Detail doa: MP3 mode aktif, readyState=4, play menjalankan audio
+- 56/56 MP3 tersedia (81 KB – 785 KB, avg 170 KB, total 9.5 MB)
 
-### Bug Fixes
-- service-worker cache path: `/script.js` → `/script_main.js`
-- 8 missing PNG icons generated from SVG
-- Cleaned 24 doa with Chinese CJK glyphs
-- Removed backup files & unused large assets
+## File Changes This Session
+- `script_main.js` — audio player rewrite + Tebak Doa (+170 LOC)
+- `service-worker.js` — v4 + audio cache
+- `scripts/generate_audio.py` — new (script one-off)
+- `assets/audio/*.mp3` — new (56 files)
+- `backend/.env` — EMERGENT_LLM_KEY (untuk generator saja)
 
-### Core Features
-- 🔥 Streak counter (consecutive days)
-- 📤 Share Progress via Web Share API
-- 🌙 Full Dark Mode theme
-- 🏆 6 badges (4 progress + 2 streak-based)
-- Avatar selection (Ahmad/Anisa) in settings
+## Backlog / P1
+- Best score tracking khusus Tebak Doa
+- Highlight kata Arab saat MP3 dimainkan (perlu timestamp)
+- Regenerate audio dengan model lebih baru (gpt-4o-mini-tts) untuk pronunciation Arab yang lebih native
+- Polish dark mode di halaman result
 
-### Custom Illustrations (56 doa)
-- Generated via Gemini 3.1 Flash Image Preview (Nano Banana) using Emergent LLM Key
-- Consistent art direction: Pixar × Ghibli warm cartoon, matching character asset style
-- Character-appropriate: boy uses white kopiah + blue outfit, girl uses pink hijab
-- Contextual per doa: bedtime scene for tidur, market for pasar, mosque for masjid, etc.
-- Compressed to WebP (avg 57KB) — total 3.2MB for all 56
-- Used as: card thumbnails in list + full illustration in detail page hero
-
-### Games
-- **Memory Card** (existing) — flip pairs
-- **Puzzle Doa** (NEW) — arrange Latin words in correct order
-  - 5 rounds per session
-  - Picks doa with 3-10 words for playability
-  - Tap-to-pick / tap-to-remove word chips
-  - +15 XP per correct answer
-  - Confetti animation + toast feedback
-  - Shows correct answer on failure
-- **Tebak Doa** — planned (P1)
-
-## Verified Testing (Playwright E2E)
-- ✅ 56 custom illustrations rendering (list thumbnails + detail hero)
-- ✅ Puzzle game full flow: pick → check → next round → results
-- ✅ Correct answer: toast + confetti + +15 XP + auto-advance
-- ✅ Wrong answer: shows correct sequence + auto-advance
-- ✅ Reset button works
-- ✅ Dark mode preserved across puzzle
-- ✅ 0 JavaScript errors
-
-## Prioritized Backlog
-
-### P1
-- **Tebak Doa** game (multiple choice: given terjemahan → pick doa name)
-- Prerecorded Arabic audio (Web Speech API pronunciation limited)
-- Font size setting implementation
-- Push perubahan ke GitHub via "Save to Github" untuk Vercel auto-deploy
-
-### P2
-- Daily reminder notifications (PWA push)
-- QR code printable card (parent/teacher shareable)
-- Puzzle difficulty levels (easy/medium/hard by word count)
-
-### P3
-- Multi-language (English translations)
-- Voice recognition — anak baca, app cek pronunciation
-- Leaderboard (needs backend + auth)
-
-## Environment
-- `EMERGENT_LLM_KEY` in `/app/backend/.env` for Gemini Nano Banana
-- Backend: minimal FastAPI at `/api/health` only
-- Frontend: static PWA served via `serve` on port 3000
-
-## File Structure
-```
-/app/
-├── index.html
-├── style.css                   # v3 elegant Islamic + puzzle styles
-├── script_main.js              # + Puzzle game + custom illustrations
-├── manifest.json
-├── service-worker.js           # v3 cache
-├── data/doa.json               # 56 doa
-├── quiz_data.json
-├── scripts/generate_illustrations.py  # Batch generator (one-time)
-├── assets/
-│   ├── characters/             # boy.webp, girl.webp
-│   ├── scenes/                 # (legacy) 3 category scenes
-│   ├── doa/                    # 56 AI-generated per-doa illustrations
-│   └── icons/                  # PWA icons (PNG + SVG)
-├── backend/server.py
-├── memory/PRD.md
-└── frontend/package.json       # static server
-```
-
-## AI Generation Note
-Illustrations generated via `emergentintegrations` library. Regenerate a single doa:
-```bash
-cd /app && python3 -c "import asyncio; from scripts.generate_illustrations import generate_one, DOA_PROMPTS; asyncio.run(generate_one(DOA_ID, 'Name', DOA_PROMPTS[DOA_ID]))"
-```
+## Next Actions (User Manual)
+1. Review perubahan di `/app`
+2. **"Save to GitHub"** untuk push ke `bayusetiadji07/doa-harian-anak-indonesia`
+3. Vercel akan auto-deploy commit baru; audio ter-serve sebagai static assets

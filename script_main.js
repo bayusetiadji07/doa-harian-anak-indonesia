@@ -308,80 +308,173 @@ function renderDoaList(searchQuery = '') {
 }
 
 // ================================================
-// Audio Player
+// Audio Player — Prerecorded MP3 (Arabic) with Web Speech API fallback
 // ================================================
 let audioState = {
   isPlaying: false,
   speed: 1,
-  utterance: null
+  utterance: null,
+  audioEl: null,          // HTMLAudioElement when prerecorded MP3 is available
+  mode: 'tts',            // 'mp3' | 'tts'
+  currentDoaId: null,
+  ttsQueueIdx: 0,         // sequential playback of Arabic MP3 -> Latin TTS -> Terjemahan TTS
+  ttsParts: []            // [{lang, text}]
 };
 
-function initAudio(arabic, latin, terjemahan) {
-  if (!('speechSynthesis' in window)) {
-    console.log('Speech synthesis not supported');
+function initAudio(arabic, latin, terjemahan, doaId) {
+  // Cancel any ongoing speech / audio
+  speechSynthesis && speechSynthesis.cancel();
+  if (audioState.audioEl) {
+    try { audioState.audioEl.pause(); } catch(e) {}
+    audioState.audioEl = null;
+  }
+  audioState.isPlaying = false;
+  audioState.utterance = null;
+  audioState.currentDoaId = doaId || null;
+
+  // Prepare TTS parts (used for latin + terjemahan after MP3, OR for full playback fallback)
+  audioState.ttsParts = [
+    { lang: 'id-ID', text: latin },
+    { lang: 'id-ID', text: 'Arti: ' + terjemahan }
+  ];
+
+  // Try prerecorded MP3 first
+  if (doaId) {
+    const mp3Url = 'assets/audio/' + doaId + '.mp3';
+    const el = new Audio(mp3Url);
+    el.preload = 'auto';
+    el.playbackRate = audioState.speed;
+    el.addEventListener('ended', () => {
+      // After Arabic MP3 finishes, chain to Latin + Terjemahan via TTS
+      playTtsChain(0);
+    });
+    el.addEventListener('error', () => {
+      // MP3 not available — fall back fully to Web Speech API
+      audioState.mode = 'tts';
+      audioState.audioEl = null;
+      initTtsFallback(arabic, latin, terjemahan);
+    });
+    audioState.audioEl = el;
+    audioState.mode = 'mp3';
     return;
   }
 
-  // Cancel any ongoing speech
-  speechSynthesis.cancel();
+  audioState.mode = 'tts';
+  initTtsFallback(arabic, latin, terjemahan);
+}
 
-  // Combine all texts: Arabic + Latin + Indonesian translation
+function initTtsFallback(arabic, latin, terjemahan) {
+  if (!('speechSynthesis' in window)) return;
+  // Use combined utterance like before (all-in-one)
   const fullText = arabic + '. ' + latin + '. Arti: ' + terjemahan;
-
   audioState.utterance = new SpeechSynthesisUtterance(fullText);
   audioState.utterance.lang = 'ar-SA';
   audioState.utterance.rate = audioState.speed;
 
-  // Try to find Arabic voice first, then Indonesian
   const voices = speechSynthesis.getVoices();
   let selectedVoice = voices.find(v => v.lang.includes('ar'));
-
-  // If no Arabic voice, try Indonesian voice
   if (!selectedVoice) {
     selectedVoice = voices.find(v => v.lang.includes('id')) || voices.find(v => v.lang.includes('ms'));
   }
+  if (!selectedVoice && voices.length) selectedVoice = voices[0];
+  if (selectedVoice) audioState.utterance.voice = selectedVoice;
 
-  // Fallback to any available voice
-  if (!selectedVoice) {
-    selectedVoice = voices[0];
-  }
-
-  if (selectedVoice) {
-    audioState.utterance.voice = selectedVoice;
-  }
-
-  audioState.utterance.onend = () => {
-    audioState.isPlaying = false;
-    updateAudioUI();
-  };
-
-  audioState.utterance.onerror = () => {
-    audioState.isPlaying = false;
-    updateAudioUI();
-  };
+  audioState.utterance.onend = () => { audioState.isPlaying = false; updateAudioUI(); };
+  audioState.utterance.onerror = () => { audioState.isPlaying = false; updateAudioUI(); };
 }
 
-function togglePlay(arabic, latin, terjemahan) {
+function playTtsChain(idx) {
   if (!('speechSynthesis' in window)) {
-    showToast('Browser tidak mendukung audio', 'error');
+    audioState.isPlaying = false;
+    updateAudioUI();
+    return;
+  }
+  if (idx >= audioState.ttsParts.length) {
+    audioState.isPlaying = false;
+    updateAudioUI();
+    return;
+  }
+  const part = audioState.ttsParts[idx];
+  const u = new SpeechSynthesisUtterance(part.text);
+  u.lang = part.lang;
+  u.rate = audioState.speed;
+  const voices = speechSynthesis.getVoices();
+  const v = voices.find(x => x.lang.startsWith('id')) || voices.find(x => x.lang.startsWith('ms')) || voices[0];
+  if (v) u.voice = v;
+  u.onend = () => playTtsChain(idx + 1);
+  u.onerror = () => { audioState.isPlaying = false; updateAudioUI(); };
+  audioState.utterance = u;
+  speechSynthesis.speak(u);
+}
+
+function togglePlay(arabic, latin, terjemahan, doaId) {
+  if (audioState.isPlaying) {
+    // Pause
+    if (audioState.mode === 'mp3' && audioState.audioEl) {
+      try { audioState.audioEl.pause(); } catch(e) {}
+    }
+    if ('speechSynthesis' in window) speechSynthesis.pause();
+    audioState.isPlaying = false;
+    updateAudioUI();
     return;
   }
 
-  if (audioState.isPlaying) {
-    speechSynthesis.pause();
-    audioState.isPlaying = false;
-  } else {
-    if (!audioState.utterance) {
-      initAudio(arabic, latin, terjemahan);
+  // Resume / start
+  if (audioState.mode === 'mp3' && audioState.audioEl && audioState.currentDoaId === doaId) {
+    // Resume MP3 or restart chain
+    const el = audioState.audioEl;
+    if (el.paused && el.currentTime > 0 && !el.ended) {
+      el.play().catch(() => {});
+      audioState.isPlaying = true;
+      updateAudioUI();
+      return;
     }
+    if (el.ended) {
+      // MP3 finished; resume TTS chain from current position (best-effort restart)
+      playTtsChain(0);
+      audioState.isPlaying = true;
+      updateAudioUI();
+      return;
+    }
+    // Fresh start
+    el.currentTime = 0;
+    el.playbackRate = audioState.speed;
+    el.play().catch(() => {
+      // Autoplay blocked or other; fall back to TTS
+      audioState.mode = 'tts';
+      initTtsFallback(arabic, latin, terjemahan);
+      if (audioState.utterance) speechSynthesis.speak(audioState.utterance);
+    });
+    audioState.isPlaying = true;
+    updateAudioUI();
+    return;
+  }
+
+  // Not initialized or different doa — reinit
+  initAudio(arabic, latin, terjemahan, doaId);
+  if (audioState.mode === 'mp3' && audioState.audioEl) {
+    audioState.audioEl.playbackRate = audioState.speed;
+    audioState.audioEl.play().catch(() => {
+      audioState.mode = 'tts';
+      initTtsFallback(arabic, latin, terjemahan);
+      if (audioState.utterance) speechSynthesis.speak(audioState.utterance);
+    });
+    audioState.isPlaying = true;
+  } else if (audioState.utterance) {
     speechSynthesis.speak(audioState.utterance);
     audioState.isPlaying = true;
+  } else {
+    showToast('Browser tidak mendukung audio', 'error');
+    return;
   }
   updateAudioUI();
 }
 
 function stopAudio() {
-  speechSynthesis.cancel();
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  if (audioState.audioEl) {
+    try { audioState.audioEl.pause(); audioState.audioEl.currentTime = 0; } catch(e) {}
+  }
   audioState.isPlaying = false;
   audioState.utterance = null;
   updateAudioUI();
@@ -392,9 +485,8 @@ function changeSpeed() {
   const currentIndex = speeds.indexOf(audioState.speed);
   audioState.speed = speeds[(currentIndex + 1) % speeds.length];
 
-  if (audioState.utterance) {
-    audioState.utterance.rate = audioState.speed;
-  }
+  if (audioState.utterance) audioState.utterance.rate = audioState.speed;
+  if (audioState.audioEl) audioState.audioEl.playbackRate = audioState.speed;
 
   updateAudioUI();
 }
@@ -440,10 +532,10 @@ function renderDetailPage() {
   
   const sceneHTML = '<div style="position:relative;margin:-24px -20px 20px;height:220px;overflow:hidden;border-radius:0 0 32px 32px;background-image:url(\'' + illustration + '\');background-size:cover;background-position:center;background-color:#065F46;"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(4,120,87,0.35) 65%,rgba(4,78,59,0.95) 100%);"></div><button class="doa-detail-back" style="position:absolute;top:16px;left:16px;" onclick="navigateTo(\'list\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button><button class="favorite-btn ' + (isFav ? 'active' : '') + '" style="position:absolute;top:16px;right:16px;" onclick="toggleFavorite(' + doa.id + ')"><svg width="20" height="20" viewBox="0 0 24 24" fill="' + (isFav ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><div style="position:absolute;bottom:16px;left:20px;right:20px;color:white;z-index:1;"><span style="display:inline-block;font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#FCD34D;padding:3px 10px;border:1px solid rgba(252,211,77,0.4);border-radius:999px;margin-bottom:8px;background:rgba(4,78,59,0.4);backdrop-filter:blur(4px);">' + (doa.kategoriLabel || doa.kategori) + '</span><h1 style="font-family:var(--font-display);font-style:italic;font-size:1.5rem;font-weight:800;line-height:1.1;text-shadow:0 2px 8px rgba(0,0,0,0.3);">' + doa.nama + '</h1></div></div>';
 
-  app.innerHTML = '<div class="doa-detail">' + sceneHTML + '<div class="doa-content"><div class="doa-arab-section"><div class="doa-arab">' + doa.arab + '</div><div class="doa-latin"><em>' + doa.latin + '</em></div></div><div class="audio-player-section"><div class="audio-controls"><button class="audio-btn" id="playAudioBtn" onclick="togglePlay(\'' + escapeForJS(doa.arab) + '\', \'' + escapeForJS(doa.latin) + '\', \'' + escapeForJS(doa.terjemahan) + '\')"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button><button class="audio-btn-small" onclick="changeSpeed()" id="speedBtn">1x</button><button class="audio-btn-small" onclick="stopAudio()"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button></div><p class="audio-hint">Arab · Latin · Indonesia</p></div><div class="doa-translation"><h4>Terjemahan</h4><p>' + doa.terjemahan + '</p></div><div class="doa-info"><div class="info-card"><div class="info-card-header">Hikmah</div><div class="info-card-content">' + (doa.hikmah || '-') + '</div></div><div class="info-card"><div class="info-card-header">Kapan Dibaca</div><div class="info-card-content">' + (doa.kapanDibaca || '-') + '</div></div><div class="info-card"><div class="info-card-header">Sumber</div><div class="info-card-content">' + (doa.sumber || '-') + '</div></div></div><div class="status-buttons"><button class="status-btn ' + (status === 'learning' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'learning\')"><span class="status-icon">📖</span><span class="status-label">Sedang Dipelajari</span></button><button class="status-btn ' + (status === 'memorized' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'memorized\')"><span class="status-icon">✓</span><span class="status-label">Sudah Hafal</span></button></div></div></div>';
+  app.innerHTML = '<div class="doa-detail">' + sceneHTML + '<div class="doa-content"><div class="doa-arab-section"><div class="doa-arab">' + doa.arab + '</div><div class="doa-latin"><em>' + doa.latin + '</em></div></div><div class="audio-player-section"><div class="audio-controls"><button class="audio-btn" id="playAudioBtn" data-testid="play-audio-btn" onclick="togglePlay(\'' + escapeForJS(doa.arab) + '\', \'' + escapeForJS(doa.latin) + '\', \'' + escapeForJS(doa.terjemahan) + '\', ' + doa.id + ')"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button><button class="audio-btn-small" onclick="changeSpeed()" id="speedBtn">1x</button><button class="audio-btn-small" onclick="stopAudio()"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button></div><p class="audio-hint">Arab · Latin · Indonesia</p></div><div class="doa-translation"><h4>Terjemahan</h4><p>' + doa.terjemahan + '</p></div><div class="doa-info"><div class="info-card"><div class="info-card-header">Hikmah</div><div class="info-card-content">' + (doa.hikmah || '-') + '</div></div><div class="info-card"><div class="info-card-header">Kapan Dibaca</div><div class="info-card-content">' + (doa.kapanDibaca || '-') + '</div></div><div class="info-card"><div class="info-card-header">Sumber</div><div class="info-card-content">' + (doa.sumber || '-') + '</div></div></div><div class="status-buttons"><button class="status-btn ' + (status === 'learning' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'learning\')"><span class="status-icon">📖</span><span class="status-label">Sedang Dipelajari</span></button><button class="status-btn ' + (status === 'memorized' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'memorized\')"><span class="status-icon">✓</span><span class="status-label">Sudah Hafal</span></button></div></div></div>';
 
-  // Initialize audio with this doa
-  initAudio(doa.arab, doa.latin, doa.terjemahan);
+  // Initialize audio with this doa (prerecorded MP3 preferred, TTS fallback)
+  initAudio(doa.arab, doa.latin, doa.terjemahan, doa.id);
 }
 
 function escapeForJS(str) {
@@ -572,7 +664,155 @@ function renderGamePage() {
   const app = document.getElementById('app');
   if (!app) return;
   
-  app.innerHTML = '<div class="main-content"><div class="section-title"><h2>Game Edukasi</h2></div><div class="games-grid"><div class="game-card" onclick="startMemoryGame()"><div class="game-card-icon">🧠</div><h3 class="game-card-title">Memory Card</h3><p class="game-card-desc">Pasangkan kartu</p></div><div class="game-card" onclick="startPuzzleGame()"><div class="game-card-icon">🧩</div><h3 class="game-card-title">Puzzle Doa</h3><p class="game-card-desc">Susun kata Latin</p></div><div class="game-card" style="opacity:0.55;cursor:not-allowed;"><div class="game-card-icon">🎯</div><h3 class="game-card-title">Tebak Doa</h3><p class="game-card-desc">Segera hadir</p></div></div></div>';
+  app.innerHTML = '<div class="main-content"><div class="section-title"><h2>Game Edukasi</h2></div><div class="games-grid"><div class="game-card" data-testid="game-card-memory" onclick="startMemoryGame()"><div class="game-card-icon">🧠</div><h3 class="game-card-title">Memory Card</h3><p class="game-card-desc">Pasangkan kartu</p></div><div class="game-card" data-testid="game-card-puzzle" onclick="startPuzzleGame()"><div class="game-card-icon">🧩</div><h3 class="game-card-title">Puzzle Doa</h3><p class="game-card-desc">Susun kata Latin</p></div><div class="game-card" data-testid="game-card-tebak" onclick="startTebakDoaGame()"><div class="game-card-icon">🎯</div><h3 class="game-card-title">Tebak Doa</h3><p class="game-card-desc">Tebak dari terjemahan</p></div></div></div>';
+}
+
+// ================================================
+// Tebak Doa — given translation, guess prayer name
+// ================================================
+let tebakState = {
+  questions: [],
+  currentIndex: 0,
+  score: 0,
+  selectedOption: null,
+  answered: false
+};
+
+function startTebakDoaGame() {
+  if (!App.doaList || App.doaList.length < 4) {
+    showToast('Data doa belum siap', 'error');
+    return;
+  }
+
+  // Pick 10 random unique doa as questions
+  const shuffled = [...App.doaList].sort(() => Math.random() - 0.5);
+  const picks = shuffled.slice(0, 10);
+
+  tebakState = {
+    questions: picks.map(doa => {
+      // Build 3 wrong options + 1 correct, shuffled
+      const distractors = App.doaList
+        .filter(d => d.id !== doa.id && d.nama !== doa.nama)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3)
+        .map(d => d.nama);
+      const options = [doa.nama, ...distractors].sort(() => Math.random() - 0.5);
+      return {
+        doaId: doa.id,
+        terjemahan: doa.terjemahan,
+        kategoriLabel: doa.kategoriLabel || doa.kategori,
+        correct: doa.nama,
+        options: options
+      };
+    }),
+    currentIndex: 0,
+    score: 0,
+    selectedOption: null,
+    answered: false
+  };
+
+  renderTebakRound();
+}
+
+function renderTebakRound() {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  if (tebakState.currentIndex >= tebakState.questions.length) {
+    return renderTebakResult();
+  }
+
+  const q = tebakState.questions[tebakState.currentIndex];
+  const progress = ((tebakState.currentIndex + 1) / tebakState.questions.length) * 100;
+
+  const optionsHTML = q.options.map((opt, i) =>
+    '<div class="quiz-option" data-testid="tebak-option-' + i + '" onclick="selectTebakAnswer(' + i + ')">' + opt + '</div>'
+  ).join('');
+
+  app.innerHTML =
+    '<div class="quiz-container" data-testid="tebak-container">' +
+      '<div class="flex-between mb-md">' +
+        '<button class="btn btn-secondary" data-testid="tebak-back-btn" onclick="renderGamePage()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Kembali</button>' +
+        '<div class="quiz-score" data-testid="tebak-score">⭐ ' + tebakState.score + '</div>' +
+      '</div>' +
+      '<div class="quiz-header">' +
+        '<div class="quiz-progress"><div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:' + progress + '%"></div></div>' +
+        '<span class="quiz-progress-text" data-testid="tebak-progress-text">' + (tebakState.currentIndex + 1) + '/' + tebakState.questions.length + '</span></div>' +
+      '</div>' +
+      '<div class="quiz-question-card">' +
+        '<div class="quiz-question">' +
+          '<span class="hero-eyebrow" style="color:var(--gold-500);border-color:var(--gold-400);">' + q.kategoriLabel + '</span>' +
+          '<p style="font-family:var(--font-body);color:var(--ink-500);font-size:0.85rem;margin-top:10px;">Terjemahan doa:</p>' +
+          '<p class="quiz-question-text" data-testid="tebak-question-text" style="font-style:italic;">"' + q.terjemahan + '"</p>' +
+          '<p style="font-family:var(--font-body);color:var(--ink-500);font-size:0.85rem;margin-top:12px;">Doa apakah ini?</p>' +
+        '</div>' +
+        '<div class="quiz-options">' + optionsHTML + '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function selectTebakAnswer(index) {
+  if (tebakState.answered) return;
+  tebakState.answered = true;
+
+  const q = tebakState.questions[tebakState.currentIndex];
+  const options = document.querySelectorAll('.quiz-option');
+  if (!options.length) return;
+
+  options.forEach(opt => opt.classList.add('disabled'));
+
+  const selected = options[index];
+  const isCorrect = selected.textContent === q.correct;
+
+  if (isCorrect) {
+    selected.classList.add('correct');
+    tebakState.score++;
+    App.xp = (App.xp || 0) + 15;
+    saveXP();
+    const scoreEl = document.querySelector('[data-testid="tebak-score"]');
+    if (scoreEl) scoreEl.textContent = '⭐ ' + tebakState.score;
+  } else {
+    selected.classList.add('incorrect');
+    options.forEach(opt => { if (opt.textContent === q.correct) opt.classList.add('correct'); });
+  }
+
+  setTimeout(function() {
+    tebakState.currentIndex++;
+    tebakState.answered = false;
+    renderTebakRound();
+  }, 1400);
+}
+
+function renderTebakResult() {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  const total = tebakState.questions.length;
+  const score = tebakState.score;
+  const pct = Math.round((score / total) * 100);
+  const passed = pct >= 60;
+
+  let icon = '📚', title = 'Tetap Semangat!', text = 'Ayo pelajari lagi setiap doanya!';
+  if (pct >= 90) { icon = '🏆'; title = 'Juara!'; text = 'Kamu sangat mengenal doa-doa harian!'; }
+  else if (pct >= 80) { icon = '🌟'; title = 'Hebat!'; text = 'Pengetahuanmu keren sekali!'; }
+  else if (pct >= 60) { icon = '💪'; title = 'Bagus!'; text = 'Terus latihan ya, sedikit lagi jago!'; }
+
+  app.innerHTML =
+    '<div class="quiz-container" data-testid="tebak-result">' +
+      '<div class="quiz-result">' +
+        '<div class="quiz-score-circle"><span>' + pct + '%</span></div>' +
+        '<div class="text-3xl mb-md">' + icon + '</div>' +
+        '<h2 class="quiz-result-title">' + title + '</h2>' +
+        '<p class="quiz-result-text">' + text + '<br>Skor: ' + score + '/' + total + '<br>+' + (score * 15) + ' XP</p>' +
+        '<div class="quiz-result-actions">' +
+          '<button class="btn btn-primary" data-testid="tebak-play-again" onclick="startTebakDoaGame()">Main Lagi</button>' +
+          '<button class="btn btn-secondary" data-testid="tebak-back-home" onclick="renderGamePage()">Kembali</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  if (passed) showConfetti();
+  tebakState.questions = [];
 }
 
 // ================================================

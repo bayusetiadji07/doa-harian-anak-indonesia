@@ -4,7 +4,8 @@
  */
 
 // Cache name
-const CACHE_NAME = 'doa-harian-v3';
+const CACHE_NAME = 'doa-harian-v4';
+const AUDIO_CACHE = 'doa-harian-audio-v1';
 
 // Files to cache
 const STATIC_ASSETS = [
@@ -39,7 +40,7 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames
-            .filter((name) => name !== CACHE_NAME)
+            .filter((name) => name !== CACHE_NAME && name !== AUDIO_CACHE)
             .map((name) => {
               console.log('[SW] Deleting old cache:', name);
               return caches.delete(name);
@@ -60,6 +61,18 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
       .then((cachedResponse) => {
+        // Audio files: cache-first, store in dedicated audio cache
+        if (event.request.url.includes('/assets/audio/')) {
+          if (cachedResponse) return cachedResponse;
+          return fetch(event.request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              const clone = networkResponse.clone();
+              caches.open(AUDIO_CACHE).then((cache) => cache.put(event.request, clone));
+            }
+            return networkResponse;
+          }).catch(() => cachedResponse);
+        }
+
         if (cachedResponse) {
           // Return cached response and update cache in background
           event.waitUntil(
