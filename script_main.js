@@ -984,60 +984,147 @@ function renderPuzzleResult() {
   if (passed) showConfetti();
 }
 
-let memoryState = { cards: [], flipped: [], matched: 0, moves: 0 };
+let memoryState = { pairs: [], cards: [], flipped: [], matched: [], moves: 0, lock: false };
 
 function startMemoryGame() {
-  const symbols = ['A','B','C','D','E','F','G','H'];
-  let cards = [...symbols, ...symbols].sort(() => Math.random() - 0.5);
-  memoryState = { cards: cards, flipped: [], matched: 0, moves: 0 };
-  
+  // Pick 8 random doa illustrations as pairs
+  if (!App.doaList || App.doaList.length < 8) {
+    showToast('Data doa belum siap', 'error');
+    return;
+  }
+  const shuffledDoa = [...App.doaList].sort(() => Math.random() - 0.5).slice(0, 8);
+  const pairs = shuffledDoa.map(d => ({ id: d.id, nama: d.nama }));
+
+  // Duplicate & shuffle -> 16 cards
+  const cards = [...pairs, ...pairs]
+    .map((p, i) => ({ ...p, cardIdx: i }))
+    .sort(() => Math.random() - 0.5);
+
+  memoryState = { pairs: pairs, cards: cards, flipped: [], matched: [], moves: 0, lock: false };
+
   const app = document.getElementById('app');
   if (!app) return;
-  
-  app.innerHTML = '<div class="main-content"><div class="flex-between mb-lg"><button class="btn btn-secondary" onclick="renderGamePage()">← Kembali</button><span>Gerakan: <span id="moves">0</span></span></div><div class="memory-grid" id="memoryGrid"></div></div>';
-  
+
+  app.innerHTML =
+    '<div class="main-content">' +
+      '<div class="flex-between mb-md">' +
+        '<button class="btn btn-secondary" data-testid="memory-back-btn" onclick="renderGamePage()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Kembali</button>' +
+        '<div style="display:flex;gap:14px;align-items:center;">' +
+          '<span style="font-family:var(--font-body);font-weight:700;color:var(--emerald-700);font-size:0.85rem;">🎯 Cocokan: <span data-testid="memory-matched" id="matched">0</span>/8</span>' +
+          '<span style="font-family:var(--font-body);font-weight:700;color:var(--ink-800);font-size:0.85rem;">🔄 <span data-testid="memory-moves" id="moves">0</span></span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="puzzle-header" style="text-align:center;padding-bottom:14px;margin-bottom:14px;border-bottom:1px dashed rgba(15,23,42,0.1);">' +
+        '<h2 style="font-family:var(--font-display);font-style:italic;color:var(--ink-900);font-size:1.25rem;">Memory Card</h2>' +
+        '<p style="font-family:var(--font-body);color:var(--ink-500);font-size:0.85rem;margin-top:4px;">Cocokan pasangan gambar doa</p>' +
+      '</div>' +
+      '<div class="memory-grid" id="memoryGrid"></div>' +
+    '</div>';
+
   renderMemoryCards();
 }
 
 function renderMemoryCards() {
   const grid = document.getElementById('memoryGrid');
   if (!grid) return;
-  
-  grid.innerHTML = memoryState.cards.map((sym, i) => {
-    const flipped = memoryState.flipped.includes(i) || (i < memoryState.matched);
-    return '<div class="memory-card ' + (flipped ? 'flipped' : '') + '" onclick="flipCard(' + i + ')">' + (flipped ? sym : '?') + '</div>';
+
+  grid.innerHTML = memoryState.cards.map((card, i) => {
+    const isMatched = memoryState.matched.includes(card.id);
+    const isFlipped = memoryState.flipped.includes(i) || isMatched;
+    return (
+      '<div class="memory-card ' + (isFlipped ? 'flipped ' : '') + (isMatched ? 'matched' : '') + '" ' +
+        'data-testid="memory-card-' + i + '" ' +
+        'onclick="flipCard(' + i + ')">' +
+        '<div class="memory-card-inner">' +
+          '<div class="memory-card-front">' +
+            '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' +
+          '</div>' +
+          '<div class="memory-card-back" style="background-image:url(\'assets/doa/' + card.id + '.webp\');">' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
   }).join('');
 }
 
 function flipCard(index) {
+  if (memoryState.lock) return;
+  const card = memoryState.cards[index];
+  if (!card) return;
+  if (memoryState.matched.includes(card.id)) return;
   if (memoryState.flipped.includes(index)) return;
   if (memoryState.flipped.length >= 2) return;
-  
+
   memoryState.flipped.push(index);
   renderMemoryCards();
-  
+
   if (memoryState.flipped.length === 2) {
     memoryState.moves++;
-    document.getElementById('moves').textContent = memoryState.moves;
-    
+    const movesEl = document.getElementById('moves');
+    if (movesEl) movesEl.textContent = memoryState.moves;
+
     const [a, b] = memoryState.flipped;
-    if (memoryState.cards[a] === memoryState.cards[b]) {
-      memoryState.matched++;
-      memoryState.flipped = [];
-      renderMemoryCards();
-      
-      if (memoryState.matched === 8) {
-        setTimeout(() => {
-          showToast('Selamat! Selesai dalam ' + memoryState.moves + ' gerakan!', 'success');
-          showConfetti();
-          App.xp = (App.xp || 0) + 15;
-          saveXP();
-        }, 300);
-      }
+    const cardA = memoryState.cards[a];
+    const cardB = memoryState.cards[b];
+
+    if (cardA.id === cardB.id) {
+      // Match
+      memoryState.lock = true;
+      setTimeout(() => {
+        memoryState.matched.push(cardA.id);
+        memoryState.flipped = [];
+        memoryState.lock = false;
+        renderMemoryCards();
+        const matchedEl = document.getElementById('matched');
+        if (matchedEl) matchedEl.textContent = memoryState.matched.length;
+
+        showToast('Cocok! ' + cardA.nama, 'success');
+
+        if (memoryState.matched.length === 8) {
+          setTimeout(() => renderMemoryResult(), 700);
+        }
+      }, 500);
     } else {
-      setTimeout(() => { memoryState.flipped = []; renderMemoryCards(); }, 1000);
+      // No match — flip back after delay
+      memoryState.lock = true;
+      setTimeout(() => {
+        memoryState.flipped = [];
+        memoryState.lock = false;
+        renderMemoryCards();
+      }, 1000);
     }
   }
+}
+
+function renderMemoryResult() {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  const moves = memoryState.moves;
+  // Star rating: ≤10 moves = 3 stars, ≤14 = 2 stars, else 1 star
+  let stars = '⭐';
+  let title = 'Selesai!';
+  let text = 'Kamu berhasil mencocokkan semua pasangan.';
+  let xpEarned = 10;
+  if (moves <= 10) { stars = '⭐⭐⭐'; title = 'Sempurna!'; text = 'Ingatanmu luar biasa!'; xpEarned = 25; }
+  else if (moves <= 14) { stars = '⭐⭐'; title = 'Hebat!'; text = 'Nyaris sempurna, kerja bagus!'; xpEarned = 18; }
+
+  App.xp = (App.xp || 0) + xpEarned;
+  saveXP();
+  showConfetti();
+
+  app.innerHTML =
+    '<div class="quiz-container" data-testid="memory-result">' +
+      '<div class="quiz-result">' +
+        '<div style="font-size:2.5rem;margin-bottom:8px;">' + stars + '</div>' +
+        '<h2 class="quiz-result-title">' + title + '</h2>' +
+        '<p class="quiz-result-text">' + text + '<br>Selesai dalam <strong>' + moves + '</strong> gerakan<br>+' + xpEarned + ' XP</p>' +
+        '<div class="quiz-result-actions">' +
+          '<button class="btn btn-primary" data-testid="memory-play-again" onclick="startMemoryGame()">Main Lagi</button>' +
+          '<button class="btn btn-secondary" data-testid="memory-back-home" onclick="renderGamePage()">Kembali</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
 }
 
 // ================================================
