@@ -1,99 +1,116 @@
 # Doa Harian Anak Indonesia — PRD
 
 ## Original Problem Statement
-User request: "cek folder aplikasi di folder github" — GitHub repo: https://github.com/bayusetiadji07/doa-harian-anak-indonesia
+GitHub: https://github.com/bayusetiadji07/doa-harian-anak-indonesia
 Live: https://doa-harian-anak-indonesia.vercel.app/
 
-Setelah pengecekan, user meminta "oke semuanya" (fix all identified issues + improvements).
+Session tasks:
+1. "cek folder aplikasi di folder github" — audit repo
+2. "oke semuanya" — fix all identified issues + add improvements
+3. "perbaiki ui sesuaikan aset yang saya lampirkan, buat tmpilan lebih elegan dan menarik" — full UI redesign with custom illustrated assets
 
 ## Application Type
-Progressive Web App (PWA) — vanilla HTML/CSS/JavaScript. Islamic educational app for Indonesian children age 5-12 to memorize daily prayers.
+Progressive Web App (PWA) — vanilla HTML/CSS/JavaScript. Islamic educational app for Indonesian children age 5-12.
 
 ## Architecture
-- **Frontend**: Vanilla JS (ES6+), HTML5, CSS3 (custom variables)
-- **Storage**: LocalStorage (favorites, progress, XP, settings, streak)
-- **PWA**: Service Worker, manifest.json, offline support
-- **Audio**: Web Speech API (TTS Arabic + Indonesian)
-- **Hosting**: Vercel (production) / Python `serve` on port 3000 (preview pod)
-- **NO backend business logic** — client-only app. Backend supervisor only serves health endpoint.
+- Vanilla JS (ES6+), HTML5, CSS3
+- LocalStorage persistence
+- Service Worker for offline
+- Web Speech API for TTS
+- Served via `serve` on port 3000 in Emergent preview
+- Minimal FastAPI backend for /api/health only
 
 ## User Personas
-- 👧 Anak usia 5-12 tahun (primary user)
-- 👨‍👩‍👧 Orang tua (parent oversight)
-- 👩‍🏫 Guru TK/SD/Madrasah / TPA-TPQ pendidik
+- 👧 Anak usia 5-12 tahun (primary)
+- 👨‍👩‍👧 Orang tua
+- 👩‍🏫 Guru TK/SD/Madrasah, pendidik TPA/TPQ
 
-## Core Requirements
-- 56 doa dengan Arab, Latin, Terjemahan, Hikmah, Kapan Dibaca, Sumber HR
-- Quiz interaktif dengan skor & confetti
-- Memory Card game
-- Progress tracking (XP, Level, Badge)
-- PWA offline-first
-- Kids-friendly UI with emoji icons
+## Design System (v3 — Islamic Elegant)
+- **Palette**: Emerald green (from masjid) + Gold (from calligraphy) + Soft coral/sky (from characters)
+- **Typography**: Fraunces (italic serif display) + Plus Jakarta Sans (body) + Amiri Quran (Arabic)
+- **Icons**: Custom SVG (lucide-style) for nav, emoji retained for kid-friendly categories
+- **Patterns**: Subtle Islamic geometric watermark on bg
+- **Illustrations**: 3D-render style characters (boy/girl) + scene backgrounds
 
-## What's Been Implemented (Jan 2026 session)
+## Assets Bank
+- `assets/characters/boy.webp` (22KB) — Ahmad (peci, blue outfit)
+- `assets/characters/girl.webp` (19KB) — Anisa (pink hijab)
+- `assets/scenes/night-village.webp` (7KB) — for kategori tidur
+- `assets/scenes/masjid.webp` (11KB) — for masjid/quran/surah kategori
+- `assets/scenes/study-room.webp` (11KB) — for belajar kategori
+- `assets/icons/*.png` (8 sizes, generated from SVG) — PWA icons
 
-### ✅ Bug Fixes
-- **service-worker.js**: Fixed broken cache path `/script.js` → `/script_main.js`, updated icon paths to `.svg`, bumped cache to `v2`
-- **doa.json**: Cleaned 24 doa yang punya karakter Mandarin nyasar (模拟, 教导, 交通工具, 提醒) → diganti kata Indonesia yang tepat
-- **manifest.json icons**: Generated 8 missing PNG icons (72, 96, 128, 144, 152, 192, 384, 512) dari SVG via cairosvg
+## What's Been Implemented (session 2026-01-16)
 
-### ✅ Cleanup
-- Removed `script_main.js.backup` & `style.css.backup`
-- Removed unused large assets (`tokoh.png` 2MB, `environment.png` 2.2MB) → replaced with WebP versions (150KB & 185KB, saved 93%)
-- Total repo size: **4.4 MB → 680 KB (85% smaller)**
+### Session 1 — Repo Audit & Bug Fixes
+- Fixed service-worker cache path: `/script.js` → `/script_main.js`
+- Generated 8 missing PNG icons (72–512px) from SVG
+- Cleaned 24 doa entries with Chinese CJK glyphs (模拟, 教导, 交通工具, 提醒)
+- Removed `.backup` files and unused large PNG assets
+- Size reduction: 4.4MB → 680KB
 
-### ✅ New Features
-- **🔥 Streak counter**: Track consecutive days of app usage, shown on home + progress page
-- **📤 Share Progress**: Web Share API (fallback to clipboard) — share Level, XP, memorized count, streak with friends
-- **🌙 Dark Mode**: Full dark theme applied to all pages (was placeholder toggle only)
-- **🏆 New Badges**: "Streak 7 Hari" & "Streak 30 Hari"
-- **Reset now clears streak too**
+### Session 2 — Feature Additions
+- 🔥 Streak counter (consecutive days)
+- 📤 Share Progress via Web Share API + clipboard fallback
+- 🌙 Dark Mode (full theme, not just toggle placeholder)
+- 🏆 Streak 7 & 30 day badges
 
-### ✅ Infrastructure
-- Set up `/app/frontend/package.json` with `serve` to run static PWA on port 3000
-- Minimal FastAPI `/app/backend/server.py` for `/api/health`
-- All supervisor services running properly
+### Session 3 — Full UI Redesign (Elegant Islamic)
+- Complete style.css rewrite with Emerald+Gold palette (`v3.0`)
+- Hero section with real character illustrations (boy+girl) + geometric pattern overlay
+- Detail page: **scene backgrounds per kategori** (night-village for tidur, masjid for masjid/quran/surah, study-room for belajar)
+- Elegant typography: Fraunces italic for headings, Amiri Quran for Arabic text (with proper direction/spacing)
+- Bottom nav: SVG icons instead of emoji
+- Header logo: custom geometric mark (conic gradient + dot)
+- Settings page: Avatar selection (Anisa/Ahmad) with character preview
+- Progress avatar uses selected character image
+- All buttons/CTAs: pill-shaped, elegant gradients, gold accents
+- Islamic geometric watermark on body bg
+- Subtle grain/pattern overlays on hero/detail headers
 
-## Verified Testing (Playwright end-to-end)
-- ✅ Home page: hero + 3 stats + 20 menu cards + streak badge visible
-- ✅ Progress page: Level + share button + 6 badges rendered
-- ✅ List page: 56 doa cards loaded
-- ✅ Dark mode: full theme applied cross-page
+## Verified Testing (Playwright E2E)
+- ✅ Home: characters + streak + stats + 20 category cards
+- ✅ Detail (tidur): night-village scene ✓ Arabic text with Amiri font ✓
+- ✅ Detail (masjid): masjid scene ✓
+- ✅ Detail (belajar): study-room scene ✓
+- ✅ Settings: avatar picker functional
+- ✅ Dark mode: full theme applied
+- ✅ Quiz start: elegant CTA
+- ✅ Progress: character avatar rendered
 - ✅ 0 JavaScript errors
 
 ## Prioritized Backlog
 
-### P1 (High)
-- Puzzle & "Tebak Doa" games (currently "Coming soon" placeholders)
-- Font size setting implementation (setting exists but unused)
-- Better audio: prerecorded Arabic audio (Web Speech API pronunciation is imperfect)
+### P1
+- Puzzle & "Tebak Doa" games (currently marked "Segera hadir")
+- Font size setting implementation
+- Better audio: prerecorded Arabic audio (Web Speech API pronunciation limited)
+- Push perubahan ke GitHub via "Save to Github" agar Vercel auto-deploy
 
-### P2 (Medium)
-- Multi-user (parent creates profile per child)
+### P2
 - Daily reminder notifications (PWA push)
-- Leaderboard (would require backend)
-- Export progress as PDF/image (for parents/teachers)
-- Ilustrasi custom per doa (currently uses category emoji)
+- Leaderboard (needs backend)
+- QR code printable card (parent/teacher shareable)
+- Custom illustrations per doa (currently uses category emoji)
 
-### P3 (Nice-to-have)
+### P3
 - Multi-language (English translations)
-- Print doa as flashcards
 - Voice recognition — anak baca, app cek pronunciation
 
 ## File Structure
 ```
 /app/
-├── index.html              # Entry point + inline QUIZ_QUESTIONS
-├── style.css               # Main stylesheet + dark mode
-├── script_main.js          # App logic
+├── index.html              # SVG icons + character splash + Google Fonts
+├── style.css               # Elegant Islamic design v3 (Emerald+Gold)
+├── script_main.js          # Scene mapping, avatar selection, share, streak
 ├── manifest.json           # PWA config
-├── service-worker.js       # Offline cache (v2)
-├── data/doa.json           # 56 prayers (cleaned)
-├── quiz_data.json          # 20 quiz questions (redundant, but kept)
+├── service-worker.js       # Offline cache v2
+├── data/doa.json           # 56 doa (CJK cleaned)
+├── quiz_data.json          # 20 questions
 ├── assets/
-│   ├── icons/              # 8 PNG (generated) + 3 SVG
-│   ├── tokoh.webp          # Compressed
-│   └── environment.webp    # Compressed
-├── backend/server.py       # Minimal health API
-└── frontend/package.json   # Static serve on port 3000
+│   ├── characters/         # boy.webp, girl.webp
+│   ├── scenes/             # night-village, masjid, study-room .webp
+│   └── icons/              # 8 PNG + 3 SVG
+├── backend/server.py       # /api/health
+└── frontend/package.json   # serve on port 3000
 ```

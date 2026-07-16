@@ -163,7 +163,7 @@ function renderHomePage() {
   const memorized = Object.keys(App.progress).filter(id => App.progress[id] === 'memorized').length;
   const total = App.doaList.length;
   
-  app.innerHTML = '<div class="main-content"><div class="hero-section animate-fade-in"><div class="hero-illustration">👦👧</div><h1 class="hero-title">Doa Harian Anak Indonesia</h1><p class="hero-subtitle">Ayo Belajar Doa Setiap Hari</p>' + (App.streak.count > 0 ? '<div style="margin-top:16px;"><span class="streak-badge">🔥 ' + App.streak.count + ' hari beruntun</span></div>' : '') + '</div><div class="stats-bar"><div class="stat-item"><div class="stat-value">' + memorized + '</div><div class="stat-label">Sudah Hafal</div></div><div class="stat-item"><div class="stat-value">' + total + '</div><div class="stat-label">Total Doa</div></div><div class="stat-item"><div class="stat-value">' + (App.favorites?.length || 0) + '</div><div class="stat-label">Favorit</div></div></div><div class="section-title"><h2>Pilih Kategori</h2></div><div class="grid-container" id="menuGrid"></div></div>';
+  app.innerHTML = '<div class="main-content"><div class="hero-section animate-fade-in"><div class="hero-inner"><div class="hero-text"><span class="hero-eyebrow">Assalamu\'alaikum</span><h1 class="hero-title">Ayo Belajar Doa Setiap Hari</h1><p class="hero-subtitle">Hafalkan doa-doa harian dengan cara yang menyenangkan</p>' + (App.streak.count > 0 ? '<span class="streak-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-.5 3-2 5-4 6 1 2 4 3 4 6 3-1 5-3 5-6-2-2-4-4-5-6z"/><path d="M8 14c-2 2-2 4-1 6 3 2 8 2 10 0 1-2 1-4-1-6-2 1-6 1-8 0z"/></svg> ' + App.streak.count + ' hari beruntun</span>' : '') + '</div><div class="hero-characters"><img src="assets/characters/boy.webp" alt=""><img src="assets/characters/girl.webp" alt=""></div></div></div><div class="stats-bar"><div class="stat-item"><div class="stat-value">' + memorized + '</div><div class="stat-label">Sudah Hafal</div></div><div class="stat-item"><div class="stat-value">' + total + '</div><div class="stat-label">Total Doa</div></div><div class="stat-item"><div class="stat-value">' + (App.favorites?.length || 0) + '</div><div class="stat-label">Favorit</div></div></div><div class="section-title"><h2>Pilih Kategori</h2></div><div class="grid-container" id="menuGrid"></div></div>';
   
   const grid = document.getElementById('menuGrid');
   if (!grid) return;
@@ -212,7 +212,7 @@ function renderListPage() {
   const app = document.getElementById('app');
   if (!app) return;
   
-  app.innerHTML = '<div class="main-content"><div class="search-container"><span class="search-icon">🔍</span><input type="text" class="search-input" id="searchInput" placeholder="Cari doa..."><button class="search-clear" id="searchClear">✕</button></div><div class="filter-container" id="filterContainer"></div><div id="doaList"></div></div>';
+  app.innerHTML = '<div class="main-content"><div class="search-container"><span class="search-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span><input type="text" class="search-input" id="searchInput" placeholder="Cari doa..."><button class="search-clear" id="searchClear">✕</button></div><div class="filter-container" id="filterContainer"></div><div id="doaList"></div></div>';
   
   renderFilters();
   renderDoaList();
@@ -254,7 +254,7 @@ function renderFilters() {
   
   container.innerHTML = cats.map(cat => {
     const active = (currentFilter === 'all' && cat.id === 'all') || currentFilter === cat.id;
-    return '<button class="filter-chip ' + (active ? 'active' : '') + '" data-category="' + cat.id + '">' + cat.icon + ' ' + cat.label + '</button>';
+    return '<button class="filter-chip ' + (active ? 'active' : '') + '" data-category="' + cat.id + '">' + cat.label + '</button>';
   }).join('');
   
   container.querySelectorAll('.filter-chip').forEach(chip => {
@@ -293,7 +293,9 @@ function renderDoaList(searchQuery = '') {
   list.innerHTML = filtered.map(doa => {
     const status = App.progress[doa.id] || '';
     let statusClass = status === 'memorized' ? 'memorized' : status === 'learning' ? 'learned' : '';
-    let statusIcon = status === 'memorized' ? '✓' : status === 'learning' ? '◐' : '';
+    let statusIcon = status === 'memorized' 
+      ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' 
+      : status === 'learning' ? '◐' : '';
     
     return '<div class="doa-card" data-id="' + doa.id + '"><div class="doa-card-icon">' + getCategoryIcon(doa.kategori) + '</div><div class="doa-card-content"><h3 class="doa-card-title">' + doa.nama + '</h3><span class="doa-card-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div><div class="doa-card-actions"><span class="doa-card-status ' + statusClass + '">' + statusIcon + '</span></div></div>';
   }).join('');
@@ -402,7 +404,9 @@ function updateAudioUI() {
   const speedBtn = document.getElementById('speedBtn');
 
   if (playBtn) {
-    playBtn.innerHTML = audioState.isPlaying ? '⏸️' : '▶️';
+    playBtn.innerHTML = audioState.isPlaying 
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
   }
   if (speedBtn) {
     speedBtn.textContent = audioState.speed + 'x';
@@ -430,8 +434,21 @@ function renderDetailPage() {
 
   const isFav = App.favorites.includes(doa.id);
   const status = App.progress[doa.id] || '';
+  
+  // Get scene illustration for this category
+  const sceneMap = {
+    'tidur': 'assets/scenes/night-village.webp',
+    'masjid': 'assets/scenes/masjid.webp',
+    'quran': 'assets/scenes/masjid.webp',
+    'surah': 'assets/scenes/masjid.webp',
+    'belajar': 'assets/scenes/study-room.webp'
+  };
+  const scene = sceneMap[doa.kategori];
+  const sceneHTML = scene 
+    ? '<div style="position:relative;margin:-24px -20px 20px;height:180px;overflow:hidden;border-radius:0 0 32px 32px;background-image:url(\'' + scene + '\');background-size:cover;background-position:center;"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(4,120,87,0.6) 80%,rgba(4,78,59,0.95) 100%);"></div><button class="doa-detail-back" style="position:absolute;top:16px;left:16px;" onclick="navigateTo(\'list\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button><button class="favorite-btn ' + (isFav ? 'active' : '') + '" style="position:absolute;top:16px;right:16px;" onclick="toggleFavorite(' + doa.id + ')"><svg width="20" height="20" viewBox="0 0 24 24" fill="' + (isFav ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><div style="position:absolute;bottom:16px;left:20px;right:20px;color:white;z-index:1;"><span style="display:inline-block;font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#FCD34D;padding:3px 10px;border:1px solid rgba(252,211,77,0.4);border-radius:999px;margin-bottom:8px;">' + (doa.kategoriLabel || doa.kategori) + '</span><h1 style="font-family:var(--font-display);font-style:italic;font-size:1.5rem;font-weight:800;line-height:1.1;">' + doa.nama + '</h1></div></div>'
+    : '<div class="doa-detail-header"><button class="doa-detail-back" onclick="navigateTo(\'list\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button><button class="favorite-btn ' + (isFav ? 'active' : '') + '" onclick="toggleFavorite(' + doa.id + ')"><svg width="20" height="20" viewBox="0 0 24 24" fill="' + (isFav ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><div class="doa-detail-illustration">' + getCategoryIcon(doa.kategori) + '</div><h1 class="doa-detail-title">' + doa.nama + '</h1><span class="doa-detail-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div>';
 
-  app.innerHTML = '<div class="doa-detail"><div class="doa-detail-header"><button class="doa-detail-back" onclick="navigateTo(\'list\')">←</button><button class="favorite-btn ' + (isFav ? 'active' : '') + '" onclick="toggleFavorite(' + doa.id + ')">⭐</button><div class="doa-detail-illustration">' + getCategoryIcon(doa.kategori) + '</div><h1 class="doa-detail-title">' + doa.nama + '</h1><span class="doa-detail-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div><div class="doa-content"><div class="doa-arab-section"><div class="doa-arab">' + doa.arab + '</div><div class="doa-latin"><em>' + doa.latin + '</em></div></div><div class="audio-player-section"><div class="audio-controls"><button class="audio-btn" id="playAudioBtn" onclick="togglePlay(\'' + escapeForJS(doa.arab) + '\', \'' + escapeForJS(doa.latin) + '\', \'' + escapeForJS(doa.terjemahan) + '\')">▶️</button><button class="audio-btn-small" onclick="changeSpeed()" id="speedBtn">1x</button><button class="audio-btn-small" onclick="stopAudio()">⏹️</button></div><p class="audio-hint">Arab - Latin - Indonesia</p></div><div class="doa-translation"><h4>📜 Terjemahan</h4><p>' + doa.terjemahan + '</p></div><div class="doa-info"><div class="info-card"><div class="info-card-header">💡 Hikmah</div><div class="info-card-content">' + (doa.hikmah || '-') + '</div></div><div class="info-card"><div class="info-card-header">⏰ Kapan Dibaca</div><div class="info-card-content">' + (doa.kapanDibaca || '-') + '</div></div><div class="info-card"><div class="info-card-header">📚 Sumber</div><div class="info-card-content">' + (doa.sumber || '-') + '</div></div></div><div class="status-buttons"><button class="status-btn ' + (status === 'learning' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'learning\')"><span class="status-icon">📖</span><span class="status-label">Sedang Dipelajari</span></button><button class="status-btn ' + (status === 'memorized' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'memorized\')"><span class="status-icon">🎯</span><span class="status-label">Sudah Hafal</span></button></div></div></div>';
+  app.innerHTML = '<div class="doa-detail">' + sceneHTML + '<div class="doa-content"><div class="doa-arab-section"><div class="doa-arab">' + doa.arab + '</div><div class="doa-latin"><em>' + doa.latin + '</em></div></div><div class="audio-player-section"><div class="audio-controls"><button class="audio-btn" id="playAudioBtn" onclick="togglePlay(\'' + escapeForJS(doa.arab) + '\', \'' + escapeForJS(doa.latin) + '\', \'' + escapeForJS(doa.terjemahan) + '\')"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button><button class="audio-btn-small" onclick="changeSpeed()" id="speedBtn">1x</button><button class="audio-btn-small" onclick="stopAudio()"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button></div><p class="audio-hint">Arab · Latin · Indonesia</p></div><div class="doa-translation"><h4>Terjemahan</h4><p>' + doa.terjemahan + '</p></div><div class="doa-info"><div class="info-card"><div class="info-card-header">Hikmah</div><div class="info-card-content">' + (doa.hikmah || '-') + '</div></div><div class="info-card"><div class="info-card-header">Kapan Dibaca</div><div class="info-card-content">' + (doa.kapanDibaca || '-') + '</div></div><div class="info-card"><div class="info-card-header">Sumber</div><div class="info-card-content">' + (doa.sumber || '-') + '</div></div></div><div class="status-buttons"><button class="status-btn ' + (status === 'learning' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'learning\')"><span class="status-icon">📖</span><span class="status-label">Sedang Dipelajari</span></button><button class="status-btn ' + (status === 'memorized' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'memorized\')"><span class="status-icon">✓</span><span class="status-label">Sudah Hafal</span></button></div></div></div>';
 
   // Initialize audio with this doa
   initAudio(doa.arab, doa.latin, doa.terjemahan);
@@ -479,7 +496,7 @@ function renderQuizPage() {
   if (!app) return;
   
   if (quizState.questions.length === 0 || quizState.currentIndex >= quizState.questions.length) {
-    app.innerHTML = '<div class="quiz-container"><div class="quiz-start"><div class="text-3xl mb-md">📝</div><h2>Quiz Doa Harian</h2><p class="text-secondary mb-xl">Uji kemampuanmu menghafal doa!</p><button class="btn btn-primary" onclick="startQuiz()">Mulai Quiz</button></div></div>';
+    app.innerHTML = '<div class="quiz-container"><div class="quiz-start"><div style="width:80px;height:80px;margin:0 auto 20px;border-radius:24px;background:rgba(252,211,77,0.2);display:flex;align-items:center;justify-content:center;font-size:2.5rem;border:1px solid rgba(252,211,77,0.35);backdrop-filter:blur(8px);">📝</div><h2>Uji Hafalanmu</h2><p style="margin-bottom:28px;">10 pertanyaan pilihan ganda untuk mengasah pengetahuanmu tentang doa harian</p><button class="btn btn-primary" style="background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12;box-shadow:0 12px 30px -8px rgba(245,158,11,0.5);" onclick="startQuiz()">Mulai Quiz <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div></div>';
   } else {
     renderQuizQuestion();
   }
@@ -563,7 +580,7 @@ function renderGamePage() {
   const app = document.getElementById('app');
   if (!app) return;
   
-  app.innerHTML = '<div class="main-content"><h2 class="mb-lg">🎮 Game Edukasi</h2><div class="games-grid"><div class="game-card" onclick="startMemoryGame()"><div class="game-card-icon">🧠</div><h3 class="game-card-title">Memory Card</h3><p class="game-card-desc">Pasangkan kartu</p></div><div class="game-card"><div class="game-card-icon">🧩</div><h3 class="game-card-title">Puzzle</h3><p class="game-card-desc">Coming soon</p></div><div class="game-card"><div class="game-card-icon">🎯</div><h3 class="game-card-title">Tebak Doa</h3><p class="game-card-desc">Coming soon</p></div></div></div>';
+  app.innerHTML = '<div class="main-content"><div class="section-title"><h2>Game Edukasi</h2></div><div class="games-grid"><div class="game-card" onclick="startMemoryGame()"><div class="game-card-icon">🧠</div><h3 class="game-card-title">Memory Card</h3><p class="game-card-desc">Pasangkan kartu</p></div><div class="game-card" style="opacity:0.7;cursor:not-allowed;"><div class="game-card-icon">🧩</div><h3 class="game-card-title">Puzzle</h3><p class="game-card-desc">Segera hadir</p></div><div class="game-card" style="opacity:0.7;cursor:not-allowed;"><div class="game-card-icon">🎯</div><h3 class="game-card-title">Tebak Doa</h3><p class="game-card-desc">Segera hadir</p></div></div></div>';
 }
 
 let memoryState = { cards: [], flipped: [], matched: 0, moves: 0 };
@@ -635,7 +652,7 @@ function renderProgressPage() {
   const level = Math.floor(xp / 100) + 1;
   const pct = Math.round((memorized / total) * 100);
   
-  app.innerHTML = '<div class="main-content"><div class="progress-header"><div class="progress-avatar">👦</div><div class="progress-level">Level ' + level + '</div><div class="progress-xp">' + xp + ' XP</div>' + (App.streak.count > 0 ? '<div style="margin-top:12px;"><span class="streak-badge">🔥 ' + App.streak.count + ' hari beruntun</span></div>' : '') + '</div><div class="progress-stats"><div class="progress-stat-card"><div class="progress-stat-value">' + memorized + '</div><div class="progress-stat-label">Sudah Hafal</div></div><div class="progress-stat-card"><div class="progress-stat-value">' + total + '</div><div class="progress-stat-label">Total Doa</div></div><div class="progress-stat-card"><div class="progress-stat-value">' + pct + '%</div><div class="progress-stat-label">Progress</div></div></div><div style="text-align:center;margin:20px 0;"><button class="share-btn" onclick="shareProgress()"><span>📤</span><span>Bagikan Progress</span></button></div><h3 class="mb-md">🏆 Badge</h3><div class="badge-grid"><div class="badge-item ' + (memorized >= 10 ? 'unlocked' : '') + '"><div class="badge-icon">🥉</div><span class="badge-name">Hafidz Pemula</span></div><div class="badge-item ' + (memorized >= 25 ? 'unlocked' : '') + '"><div class="badge-icon">🥈</div><span class="badge-name">Hafidz Hebat</span></div><div class="badge-item ' + (memorized >= 50 ? 'unlocked' : '') + '"><div class="badge-icon">🥇</div><span class="badge-name">Hafidz Cilik</span></div><div class="badge-item ' + (memorized >= 56 ? 'unlocked' : '') + '"><div class="badge-icon">👑</div><span class="badge-name">Bintang Doa</span></div><div class="badge-item ' + (App.streak.count >= 7 ? 'unlocked' : '') + '"><div class="badge-icon">🔥</div><span class="badge-name">Streak 7 Hari</span></div><div class="badge-item ' + (App.streak.count >= 30 ? 'unlocked' : '') + '"><div class="badge-icon">⚡</div><span class="badge-name">Streak 30 Hari</span></div></div></div>';
+  app.innerHTML = '<div class="main-content"><div class="progress-header"><div class="progress-avatar"><img src="assets/characters/' + (App.settings.avatar === 'boy' ? 'boy' : 'girl') + '.webp" alt="Avatar"></div><div class="progress-level">Level ' + level + '</div><div class="progress-xp">' + xp + ' XP</div>' + (App.streak.count > 0 ? '<div style="margin-top:14px;"><span class="streak-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-.5 3-2 5-4 6 1 2 4 3 4 6 3-1 5-3 5-6-2-2-4-4-5-6z"/><path d="M8 14c-2 2-2 4-1 6 3 2 8 2 10 0 1-2 1-4-1-6-2 1-6 1-8 0z"/></svg> ' + App.streak.count + ' hari beruntun</span></div>' : '') + '</div><div class="progress-stats"><div class="progress-stat-card"><div class="progress-stat-value">' + memorized + '</div><div class="progress-stat-label">Sudah Hafal</div></div><div class="progress-stat-card"><div class="progress-stat-value">' + total + '</div><div class="progress-stat-label">Total Doa</div></div><div class="progress-stat-card"><div class="progress-stat-value">' + pct + '%</div><div class="progress-stat-label">Progress</div></div></div><div style="text-align:center;margin:20px 0;"><button class="share-btn" onclick="shareProgress()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>Bagikan Progress</span></button></div><div class="section-title"><h2>Badge Kamu</h2></div><div class="badge-grid"><div class="badge-item ' + (memorized >= 10 ? 'unlocked' : '') + '"><div class="badge-icon">🥉</div><span class="badge-name">Hafidz Pemula</span></div><div class="badge-item ' + (memorized >= 25 ? 'unlocked' : '') + '"><div class="badge-icon">🥈</div><span class="badge-name">Hafidz Hebat</span></div><div class="badge-item ' + (memorized >= 50 ? 'unlocked' : '') + '"><div class="badge-icon">🥇</div><span class="badge-name">Hafidz Cilik</span></div><div class="badge-item ' + (memorized >= 56 ? 'unlocked' : '') + '"><div class="badge-icon">👑</div><span class="badge-name">Bintang Doa</span></div><div class="badge-item ' + (App.streak.count >= 7 ? 'unlocked' : '') + '"><div class="badge-icon">🔥</div><span class="badge-name">Streak 7 Hari</span></div><div class="badge-item ' + (App.streak.count >= 30 ? 'unlocked' : '') + '"><div class="badge-icon">⚡</div><span class="badge-name">Streak 30 Hari</span></div></div></div>';
 }
 
 // Share Progress Feature
@@ -679,7 +696,22 @@ function renderSettingsPage() {
   const app = document.getElementById('app');
   if (!app) return;
   
-  app.innerHTML = '<div class="main-content"><h2 class="mb-lg">⚙️ Pengaturan</h2><div class="info-card mb-md"><div class="info-card-header">🌙 Mode Gelap</div><div class="info-card-content"><label class="switch"><input type="checkbox" id="darkModeToggle" ' + (App.settings.darkMode ? 'checked' : '') + ' onchange="toggleDarkMode()"></label></div></div><button class="btn btn-secondary" onclick="resetProgress()">🔄 Reset Progress</button></div>';
+  const currentAvatar = App.settings.avatar || 'girl';
+  
+  app.innerHTML = '<div class="main-content"><div class="section-title"><h2>Pengaturan</h2></div>' +
+    '<div class="info-card mb-md"><div class="info-card-header">Pilih Avatar</div><div class="info-card-content"><div style="display:flex;gap:12px;margin-top:10px;">' +
+    '<button onclick="setAvatar(\'girl\')" style="flex:1;padding:12px;border-radius:16px;border:2px solid ' + (currentAvatar === 'girl' ? 'var(--emerald-500)' : 'rgba(0,0,0,0.08)') + ';background:' + (currentAvatar === 'girl' ? 'var(--emerald-50)' : 'white') + ';cursor:pointer;transition:all 0.2s;"><img src="assets/characters/girl.webp" alt="Girl" style="width:70px;height:70px;margin:0 auto;"><div style="font-family:var(--font-body);font-weight:700;font-size:0.85rem;color:var(--ink-800);margin-top:6px;">Anisa</div></button>' +
+    '<button onclick="setAvatar(\'boy\')" style="flex:1;padding:12px;border-radius:16px;border:2px solid ' + (currentAvatar === 'boy' ? 'var(--emerald-500)' : 'rgba(0,0,0,0.08)') + ';background:' + (currentAvatar === 'boy' ? 'var(--emerald-50)' : 'white') + ';cursor:pointer;transition:all 0.2s;"><img src="assets/characters/boy.webp" alt="Boy" style="width:70px;height:70px;margin:0 auto;"><div style="font-family:var(--font-body);font-weight:700;font-size:0.85rem;color:var(--ink-800);margin-top:6px;">Ahmad</div></button>' +
+    '</div></div></div>' +
+    '<div class="info-card mb-md"><div class="info-card-header">Mode Gelap</div><div class="info-card-content" style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;"><span style="color:var(--ink-500);font-size:0.85rem;">Tampilan malam yang lembut untuk mata</span><label class="switch"><input type="checkbox" id="darkModeToggle" ' + (App.settings.darkMode ? 'checked' : '') + ' onchange="toggleDarkMode()"></label></div></div>' +
+    '<div style="text-align:center;margin-top:24px;"><button class="btn btn-secondary" onclick="resetProgress()">Reset Progress</button></div></div>';
+}
+
+function setAvatar(name) {
+  App.settings.avatar = name;
+  saveSettings();
+  renderSettingsPage();
+  showToast('Avatar diubah', 'success');
 }
 
 function toggleDarkMode() {
@@ -713,11 +745,11 @@ function renderFavoritesPage() {
   const favs = App.doaList.filter(d => App.favorites.includes(d.id));
   
   if (favs.length === 0) {
-    app.innerHTML = '<div class="main-content"><div class="text-center p-xl"><div class="text-3xl mb-md">⭐</div><h2>Belum Ada Favorit</h2><p class="text-secondary mb-lg">Tambahkan doa favorit dengan menekan bintang</p><button class="btn btn-primary" onclick="navigateTo(\'list\')">Lihat Doa</button></div></div>';
+    app.innerHTML = '<div class="main-content"><div class="text-center p-xl"><div style="width:100px;height:100px;margin:20px auto;border-radius:50%;background:linear-gradient(135deg,var(--gold-100),var(--gold-300));display:flex;align-items:center;justify-content:center;font-size:2.5rem;box-shadow:var(--shadow-gold);">⭐</div><h2 style="margin-bottom:8px;">Belum Ada Favorit</h2><p class="text-secondary mb-lg">Tambahkan doa favorit dengan menekan ikon bintang di detail doa</p><button class="btn btn-primary" onclick="navigateTo(\'list\')">Lihat Semua Doa</button></div></div>';
     return;
   }
   
-  let html = '<div class="main-content"><h2 class="mb-lg">⭐ Favorit</h2>';
+  let html = '<div class="main-content"><div class="section-title"><h2>Doa Favorit</h2></div>';
   favs.forEach(doa => {
     html += '<div class="doa-card" onclick="showDoaDetail(' + doa.id + ')"><div class="doa-card-icon">' + getCategoryIcon(doa.kategori) + '</div><div class="doa-card-content"><h3 class="doa-card-title">' + doa.nama + '</h3><span class="doa-card-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div></div>';
   });
