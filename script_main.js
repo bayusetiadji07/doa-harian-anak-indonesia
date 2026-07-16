@@ -297,7 +297,7 @@ function renderDoaList(searchQuery = '') {
       ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' 
       : status === 'learning' ? '◐' : '';
     
-    return '<div class="doa-card" data-id="' + doa.id + '"><div class="doa-card-icon">' + getCategoryIcon(doa.kategori) + '</div><div class="doa-card-content"><h3 class="doa-card-title">' + doa.nama + '</h3><span class="doa-card-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div><div class="doa-card-actions"><span class="doa-card-status ' + statusClass + '">' + statusIcon + '</span></div></div>';
+    return '<div class="doa-card" data-id="' + doa.id + '"><div class="doa-card-thumb" style="background-image:url(\'assets/doa/' + doa.id + '.webp\');"></div><div class="doa-card-content"><h3 class="doa-card-title">' + doa.nama + '</h3><span class="doa-card-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div><div class="doa-card-actions"><span class="doa-card-status ' + statusClass + '">' + statusIcon + '</span></div></div>';
   }).join('');
   
   list.querySelectorAll('.doa-card').forEach(card => {
@@ -434,19 +434,11 @@ function renderDetailPage() {
 
   const isFav = App.favorites.includes(doa.id);
   const status = App.progress[doa.id] || '';
+
+  // Custom illustration per doa (AI-generated)
+  const illustration = 'assets/doa/' + doa.id + '.webp';
   
-  // Get scene illustration for this category
-  const sceneMap = {
-    'tidur': 'assets/scenes/night-village.webp',
-    'masjid': 'assets/scenes/masjid.webp',
-    'quran': 'assets/scenes/masjid.webp',
-    'surah': 'assets/scenes/masjid.webp',
-    'belajar': 'assets/scenes/study-room.webp'
-  };
-  const scene = sceneMap[doa.kategori];
-  const sceneHTML = scene 
-    ? '<div style="position:relative;margin:-24px -20px 20px;height:180px;overflow:hidden;border-radius:0 0 32px 32px;background-image:url(\'' + scene + '\');background-size:cover;background-position:center;"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(4,120,87,0.6) 80%,rgba(4,78,59,0.95) 100%);"></div><button class="doa-detail-back" style="position:absolute;top:16px;left:16px;" onclick="navigateTo(\'list\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button><button class="favorite-btn ' + (isFav ? 'active' : '') + '" style="position:absolute;top:16px;right:16px;" onclick="toggleFavorite(' + doa.id + ')"><svg width="20" height="20" viewBox="0 0 24 24" fill="' + (isFav ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><div style="position:absolute;bottom:16px;left:20px;right:20px;color:white;z-index:1;"><span style="display:inline-block;font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#FCD34D;padding:3px 10px;border:1px solid rgba(252,211,77,0.4);border-radius:999px;margin-bottom:8px;">' + (doa.kategoriLabel || doa.kategori) + '</span><h1 style="font-family:var(--font-display);font-style:italic;font-size:1.5rem;font-weight:800;line-height:1.1;">' + doa.nama + '</h1></div></div>'
-    : '<div class="doa-detail-header"><button class="doa-detail-back" onclick="navigateTo(\'list\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button><button class="favorite-btn ' + (isFav ? 'active' : '') + '" onclick="toggleFavorite(' + doa.id + ')"><svg width="20" height="20" viewBox="0 0 24 24" fill="' + (isFav ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><div class="doa-detail-illustration">' + getCategoryIcon(doa.kategori) + '</div><h1 class="doa-detail-title">' + doa.nama + '</h1><span class="doa-detail-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div>';
+  const sceneHTML = '<div style="position:relative;margin:-24px -20px 20px;height:220px;overflow:hidden;border-radius:0 0 32px 32px;background-image:url(\'' + illustration + '\');background-size:cover;background-position:center;background-color:#065F46;"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(4,120,87,0.35) 65%,rgba(4,78,59,0.95) 100%);"></div><button class="doa-detail-back" style="position:absolute;top:16px;left:16px;" onclick="navigateTo(\'list\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button><button class="favorite-btn ' + (isFav ? 'active' : '') + '" style="position:absolute;top:16px;right:16px;" onclick="toggleFavorite(' + doa.id + ')"><svg width="20" height="20" viewBox="0 0 24 24" fill="' + (isFav ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><div style="position:absolute;bottom:16px;left:20px;right:20px;color:white;z-index:1;"><span style="display:inline-block;font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#FCD34D;padding:3px 10px;border:1px solid rgba(252,211,77,0.4);border-radius:999px;margin-bottom:8px;background:rgba(4,78,59,0.4);backdrop-filter:blur(4px);">' + (doa.kategoriLabel || doa.kategori) + '</span><h1 style="font-family:var(--font-display);font-style:italic;font-size:1.5rem;font-weight:800;line-height:1.1;text-shadow:0 2px 8px rgba(0,0,0,0.3);">' + doa.nama + '</h1></div></div>';
 
   app.innerHTML = '<div class="doa-detail">' + sceneHTML + '<div class="doa-content"><div class="doa-arab-section"><div class="doa-arab">' + doa.arab + '</div><div class="doa-latin"><em>' + doa.latin + '</em></div></div><div class="audio-player-section"><div class="audio-controls"><button class="audio-btn" id="playAudioBtn" onclick="togglePlay(\'' + escapeForJS(doa.arab) + '\', \'' + escapeForJS(doa.latin) + '\', \'' + escapeForJS(doa.terjemahan) + '\')"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button><button class="audio-btn-small" onclick="changeSpeed()" id="speedBtn">1x</button><button class="audio-btn-small" onclick="stopAudio()"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button></div><p class="audio-hint">Arab · Latin · Indonesia</p></div><div class="doa-translation"><h4>Terjemahan</h4><p>' + doa.terjemahan + '</p></div><div class="doa-info"><div class="info-card"><div class="info-card-header">Hikmah</div><div class="info-card-content">' + (doa.hikmah || '-') + '</div></div><div class="info-card"><div class="info-card-header">Kapan Dibaca</div><div class="info-card-content">' + (doa.kapanDibaca || '-') + '</div></div><div class="info-card"><div class="info-card-header">Sumber</div><div class="info-card-content">' + (doa.sumber || '-') + '</div></div></div><div class="status-buttons"><button class="status-btn ' + (status === 'learning' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'learning\')"><span class="status-icon">📖</span><span class="status-label">Sedang Dipelajari</span></button><button class="status-btn ' + (status === 'memorized' ? 'active' : '') + '" onclick="setDoaStatus(' + doa.id + ', \'memorized\')"><span class="status-icon">✓</span><span class="status-label">Sudah Hafal</span></button></div></div></div>';
 
@@ -580,7 +572,176 @@ function renderGamePage() {
   const app = document.getElementById('app');
   if (!app) return;
   
-  app.innerHTML = '<div class="main-content"><div class="section-title"><h2>Game Edukasi</h2></div><div class="games-grid"><div class="game-card" onclick="startMemoryGame()"><div class="game-card-icon">🧠</div><h3 class="game-card-title">Memory Card</h3><p class="game-card-desc">Pasangkan kartu</p></div><div class="game-card" style="opacity:0.7;cursor:not-allowed;"><div class="game-card-icon">🧩</div><h3 class="game-card-title">Puzzle</h3><p class="game-card-desc">Segera hadir</p></div><div class="game-card" style="opacity:0.7;cursor:not-allowed;"><div class="game-card-icon">🎯</div><h3 class="game-card-title">Tebak Doa</h3><p class="game-card-desc">Segera hadir</p></div></div></div>';
+  app.innerHTML = '<div class="main-content"><div class="section-title"><h2>Game Edukasi</h2></div><div class="games-grid"><div class="game-card" onclick="startMemoryGame()"><div class="game-card-icon">🧠</div><h3 class="game-card-title">Memory Card</h3><p class="game-card-desc">Pasangkan kartu</p></div><div class="game-card" onclick="startPuzzleGame()"><div class="game-card-icon">🧩</div><h3 class="game-card-title">Puzzle Doa</h3><p class="game-card-desc">Susun kata Latin</p></div><div class="game-card" style="opacity:0.55;cursor:not-allowed;"><div class="game-card-icon">🎯</div><h3 class="game-card-title">Tebak Doa</h3><p class="game-card-desc">Segera hadir</p></div></div></div>';
+}
+
+// ================================================
+// Puzzle Game — arrange Latin words in correct order
+// ================================================
+let puzzleState = {
+  doa: null,
+  correctOrder: [],
+  currentAnswer: [],
+  shuffledBank: [],
+  score: 0,
+  completed: 0,
+  roundsToPlay: 5,
+  playedIds: []
+};
+
+function startPuzzleGame() {
+  puzzleState = {
+    doa: null,
+    correctOrder: [],
+    currentAnswer: [],
+    shuffledBank: [],
+    score: 0,
+    completed: 0,
+    roundsToPlay: 5,
+    playedIds: []
+  };
+  nextPuzzleRound();
+}
+
+function nextPuzzleRound() {
+  // Pick doa: prefer short doa (3-8 words) for playability
+  const candidates = App.doaList.filter(d => {
+    if (puzzleState.playedIds.includes(d.id)) return false;
+    const wc = tokenizeLatin(d.latin).length;
+    return wc >= 3 && wc <= 10;
+  });
+  if (candidates.length === 0 || puzzleState.completed >= puzzleState.roundsToPlay) {
+    return renderPuzzleResult();
+  }
+  const doa = candidates[Math.floor(Math.random() * candidates.length)];
+  puzzleState.playedIds.push(doa.id);
+  puzzleState.doa = doa;
+  const words = tokenizeLatin(doa.latin);
+  puzzleState.correctOrder = words;
+  puzzleState.currentAnswer = [];
+  // Create shuffled bank with unique IDs (in case duplicates)
+  puzzleState.shuffledBank = words
+    .map((w, i) => ({ id: i, word: w, used: false }))
+    .sort(() => Math.random() - 0.5);
+  renderPuzzleRound();
+}
+
+function tokenizeLatin(latin) {
+  // Split on whitespace and drop obvious punctuation-only tokens
+  return latin
+    .split(/\s+/)
+    .map(w => w.trim())
+    .filter(w => w && w !== '.' && w !== ',');
+}
+
+function renderPuzzleRound() {
+  const app = document.getElementById('app');
+  const doa = puzzleState.doa;
+  if (!app || !doa) return;
+
+  const answerHTML = puzzleState.currentAnswer.length === 0
+    ? '<span class="puzzle-answer-placeholder">Ketuk kata di bawah untuk menyusun</span>'
+    : puzzleState.currentAnswer.map(item => 
+        '<button class="puzzle-word-chip in-answer" onclick="unpickPuzzleWord(' + item.id + ')">' + item.word + '</button>'
+      ).join('');
+
+  const bankHTML = puzzleState.shuffledBank.map(item =>
+    item.used
+      ? '<button class="puzzle-word-chip used" disabled>' + item.word + '</button>'
+      : '<button class="puzzle-word-chip" onclick="pickPuzzleWord(' + item.id + ')">' + item.word + '</button>'
+  ).join('');
+
+  app.innerHTML = 
+    '<div class="main-content"><div class="flex-between mb-md">' +
+      '<button class="btn btn-secondary" onclick="renderGamePage()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Kembali</button>' +
+      '<span style="font-family:var(--font-body);font-weight:700;color:var(--emerald-700);">' + (puzzleState.completed + 1) + '/' + puzzleState.roundsToPlay + '</span>' +
+    '</div>' +
+    '<div class="puzzle-container">' +
+      '<div class="puzzle-header"><span class="hero-eyebrow" style="color:var(--gold-500);border-color:var(--gold-400);">' + (doa.kategoriLabel || doa.kategori) + '</span><h2 style="font-family:var(--font-display);font-style:italic;color:var(--ink-900);margin-top:8px;">' + doa.nama + '</h2><p style="font-family:var(--font-body);color:var(--ink-500);font-size:0.85rem;margin-top:4px;">' + doa.terjemahan.slice(0, 100) + (doa.terjemahan.length > 100 ? '...' : '') + '</p></div>' +
+      '<div class="puzzle-answer" id="puzzleAnswer">' + answerHTML + '</div>' +
+      '<div class="puzzle-bank">' + bankHTML + '</div>' +
+      '<div class="puzzle-actions">' +
+        '<button class="btn btn-secondary" onclick="resetPuzzle()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg> Reset</button>' +
+        '<button class="btn btn-primary" onclick="checkPuzzle()" ' + (puzzleState.currentAnswer.length !== puzzleState.correctOrder.length ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>Cek Jawaban</button>' +
+      '</div>' +
+    '</div></div>';
+}
+
+function pickPuzzleWord(id) {
+  const item = puzzleState.shuffledBank.find(x => x.id === id);
+  if (!item || item.used) return;
+  item.used = true;
+  puzzleState.currentAnswer.push({ id: item.id, word: item.word });
+  renderPuzzleRound();
+}
+
+function unpickPuzzleWord(id) {
+  const idx = puzzleState.currentAnswer.findIndex(x => x.id === id);
+  if (idx === -1) return;
+  puzzleState.currentAnswer.splice(idx, 1);
+  const bankItem = puzzleState.shuffledBank.find(x => x.id === id);
+  if (bankItem) bankItem.used = false;
+  renderPuzzleRound();
+}
+
+function resetPuzzle() {
+  puzzleState.currentAnswer = [];
+  puzzleState.shuffledBank.forEach(x => x.used = false);
+  renderPuzzleRound();
+}
+
+function checkPuzzle() {
+  const answer = puzzleState.currentAnswer.map(x => x.word);
+  const correct = puzzleState.correctOrder;
+  const isCorrect = answer.length === correct.length && answer.every((w, i) => w === correct[i]);
+  
+  puzzleState.completed++;
+  
+  if (isCorrect) {
+    puzzleState.score++;
+    App.xp = (App.xp || 0) + 15;
+    saveXP();
+    showToast('Benar! +15 XP', 'success');
+    showConfetti();
+  } else {
+    showToast('Kurang tepat, jawaban benar: ' + correct.join(' '), 'error');
+  }
+
+  // Show correct answer briefly then next round
+  const answerEl = document.getElementById('puzzleAnswer');
+  if (answerEl) {
+    answerEl.style.background = isCorrect ? 'linear-gradient(135deg, #ECFDF5, #D1FAE5)' : 'linear-gradient(135deg, #FEF2F2, #FEE2E2)';
+    answerEl.style.borderColor = isCorrect ? 'var(--emerald-500)' : 'var(--coral-500)';
+    if (!isCorrect) {
+      answerEl.innerHTML = correct.map(w => '<span class="puzzle-word-chip correct-answer">' + w + '</span>').join('');
+    }
+  }
+  
+  setTimeout(() => nextPuzzleRound(), isCorrect ? 1200 : 2200);
+}
+
+function renderPuzzleResult() {
+  const app = document.getElementById('app');
+  if (!app) return;
+  const total = puzzleState.roundsToPlay;
+  const score = puzzleState.score;
+  const pct = Math.round((score / total) * 100);
+  const passed = pct >= 60;
+  const title = pct >= 80 ? 'Luar Biasa!' : passed ? 'Bagus!' : 'Terus Berlatih!';
+  const text = pct >= 80 ? 'Kamu jago menyusun doa!' : passed ? 'Sudah baik, tingkatkan lagi ya' : 'Coba lagi, kamu pasti bisa!';
+  
+  app.innerHTML = 
+    '<div class="main-content"><div class="quiz-result">' +
+      '<div class="quiz-score-circle"><span>' + pct + '%</span></div>' +
+      '<h2 class="quiz-result-title">' + title + '</h2>' +
+      '<p class="quiz-result-text">' + text + '<br>Skor: ' + score + '/' + total + '</p>' +
+      '<div class="quiz-result-actions">' +
+        '<button class="btn btn-primary" onclick="startPuzzleGame()">Main Lagi</button>' +
+        '<button class="btn btn-secondary" onclick="renderGamePage()">Kembali</button>' +
+      '</div>' +
+    '</div></div>';
+  
+  if (passed) showConfetti();
 }
 
 let memoryState = { cards: [], flipped: [], matched: 0, moves: 0 };
@@ -751,7 +912,7 @@ function renderFavoritesPage() {
   
   let html = '<div class="main-content"><div class="section-title"><h2>Doa Favorit</h2></div>';
   favs.forEach(doa => {
-    html += '<div class="doa-card" onclick="showDoaDetail(' + doa.id + ')"><div class="doa-card-icon">' + getCategoryIcon(doa.kategori) + '</div><div class="doa-card-content"><h3 class="doa-card-title">' + doa.nama + '</h3><span class="doa-card-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div></div>';
+    html += '<div class="doa-card" onclick="showDoaDetail(' + doa.id + ')"><div class="doa-card-thumb" style="background-image:url(\'assets/doa/' + doa.id + '.webp\');"></div><div class="doa-card-content"><h3 class="doa-card-title">' + doa.nama + '</h3><span class="doa-card-category">' + (doa.kategoriLabel || doa.kategori) + '</span></div></div>';
   });
   html += '</div>';
   

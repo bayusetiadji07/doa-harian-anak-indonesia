@@ -4,113 +4,114 @@
 GitHub: https://github.com/bayusetiadji07/doa-harian-anak-indonesia
 Live: https://doa-harian-anak-indonesia.vercel.app/
 
-Session tasks:
-1. "cek folder aplikasi di folder github" — audit repo
-2. "oke semuanya" — fix all identified issues + add improvements
-3. "perbaiki ui sesuaikan aset yang saya lampirkan, buat tmpilan lebih elegan dan menarik" — full UI redesign with custom illustrated assets
+Session tasks (2026-01-16):
+1. Cek repo & fix identified issues
+2. Full UI redesign with attached custom assets (elegant Islamic aesthetic)
+3. Custom AI-generated illustrations per doa + implement Puzzle game
 
 ## Application Type
 Progressive Web App (PWA) — vanilla HTML/CSS/JavaScript. Islamic educational app for Indonesian children age 5-12.
 
-## Architecture
-- Vanilla JS (ES6+), HTML5, CSS3
-- LocalStorage persistence
-- Service Worker for offline
-- Web Speech API for TTS
-- Served via `serve` on port 3000 in Emergent preview
-- Minimal FastAPI backend for /api/health only
-
-## User Personas
-- 👧 Anak usia 5-12 tahun (primary)
-- 👨‍👩‍👧 Orang tua
-- 👩‍🏫 Guru TK/SD/Madrasah, pendidik TPA/TPQ
-
-## Design System (v3 — Islamic Elegant)
-- **Palette**: Emerald green (from masjid) + Gold (from calligraphy) + Soft coral/sky (from characters)
-- **Typography**: Fraunces (italic serif display) + Plus Jakarta Sans (body) + Amiri Quran (Arabic)
-- **Icons**: Custom SVG (lucide-style) for nav, emoji retained for kid-friendly categories
-- **Patterns**: Subtle Islamic geometric watermark on bg
-- **Illustrations**: 3D-render style characters (boy/girl) + scene backgrounds
+## Design System (v3 — Elegant Islamic)
+- **Palette**: Emerald + Gold + Cream (from masjid asset & Islamic calligraphy)
+- **Typography**: Fraunces (italic serif) + Plus Jakarta Sans (body) + Amiri Quran (Arabic)
+- **Illustrations**: 3D-render cartoon style, generated with Gemini Nano Banana
 
 ## Assets Bank
-- `assets/characters/boy.webp` (22KB) — Ahmad (peci, blue outfit)
-- `assets/characters/girl.webp` (19KB) — Anisa (pink hijab)
-- `assets/scenes/night-village.webp` (7KB) — for kategori tidur
-- `assets/scenes/masjid.webp` (11KB) — for masjid/quran/surah kategori
-- `assets/scenes/study-room.webp` (11KB) — for belajar kategori
-- `assets/icons/*.png` (8 sizes, generated from SVG) — PWA icons
+- `assets/characters/boy.webp` (22KB) — Ahmad
+- `assets/characters/girl.webp` (19KB) — Anisa
+- `assets/scenes/{night-village,masjid,study-room}.webp`
+- `assets/doa/{1..56}.webp` — **AI-generated illustrations per doa** (3.2MB total, avg 57KB each)
 
-## What's Been Implemented (session 2026-01-16)
+## What's Been Implemented
 
-### Session 1 — Repo Audit & Bug Fixes
-- Fixed service-worker cache path: `/script.js` → `/script_main.js`
-- Generated 8 missing PNG icons (72–512px) from SVG
-- Cleaned 24 doa entries with Chinese CJK glyphs (模拟, 教导, 交通工具, 提醒)
-- Removed `.backup` files and unused large PNG assets
-- Size reduction: 4.4MB → 680KB
+### Bug Fixes
+- service-worker cache path: `/script.js` → `/script_main.js`
+- 8 missing PNG icons generated from SVG
+- Cleaned 24 doa with Chinese CJK glyphs
+- Removed backup files & unused large assets
 
-### Session 2 — Feature Additions
+### Core Features
 - 🔥 Streak counter (consecutive days)
-- 📤 Share Progress via Web Share API + clipboard fallback
-- 🌙 Dark Mode (full theme, not just toggle placeholder)
-- 🏆 Streak 7 & 30 day badges
+- 📤 Share Progress via Web Share API
+- 🌙 Full Dark Mode theme
+- 🏆 6 badges (4 progress + 2 streak-based)
+- Avatar selection (Ahmad/Anisa) in settings
 
-### Session 3 — Full UI Redesign (Elegant Islamic)
-- Complete style.css rewrite with Emerald+Gold palette (`v3.0`)
-- Hero section with real character illustrations (boy+girl) + geometric pattern overlay
-- Detail page: **scene backgrounds per kategori** (night-village for tidur, masjid for masjid/quran/surah, study-room for belajar)
-- Elegant typography: Fraunces italic for headings, Amiri Quran for Arabic text (with proper direction/spacing)
-- Bottom nav: SVG icons instead of emoji
-- Header logo: custom geometric mark (conic gradient + dot)
-- Settings page: Avatar selection (Anisa/Ahmad) with character preview
-- Progress avatar uses selected character image
-- All buttons/CTAs: pill-shaped, elegant gradients, gold accents
-- Islamic geometric watermark on body bg
-- Subtle grain/pattern overlays on hero/detail headers
+### Custom Illustrations (56 doa)
+- Generated via Gemini 3.1 Flash Image Preview (Nano Banana) using Emergent LLM Key
+- Consistent art direction: Pixar × Ghibli warm cartoon, matching character asset style
+- Character-appropriate: boy uses white kopiah + blue outfit, girl uses pink hijab
+- Contextual per doa: bedtime scene for tidur, market for pasar, mosque for masjid, etc.
+- Compressed to WebP (avg 57KB) — total 3.2MB for all 56
+- Used as: card thumbnails in list + full illustration in detail page hero
+
+### Games
+- **Memory Card** (existing) — flip pairs
+- **Puzzle Doa** (NEW) — arrange Latin words in correct order
+  - 5 rounds per session
+  - Picks doa with 3-10 words for playability
+  - Tap-to-pick / tap-to-remove word chips
+  - +15 XP per correct answer
+  - Confetti animation + toast feedback
+  - Shows correct answer on failure
+- **Tebak Doa** — planned (P1)
 
 ## Verified Testing (Playwright E2E)
-- ✅ Home: characters + streak + stats + 20 category cards
-- ✅ Detail (tidur): night-village scene ✓ Arabic text with Amiri font ✓
-- ✅ Detail (masjid): masjid scene ✓
-- ✅ Detail (belajar): study-room scene ✓
-- ✅ Settings: avatar picker functional
-- ✅ Dark mode: full theme applied
-- ✅ Quiz start: elegant CTA
-- ✅ Progress: character avatar rendered
+- ✅ 56 custom illustrations rendering (list thumbnails + detail hero)
+- ✅ Puzzle game full flow: pick → check → next round → results
+- ✅ Correct answer: toast + confetti + +15 XP + auto-advance
+- ✅ Wrong answer: shows correct sequence + auto-advance
+- ✅ Reset button works
+- ✅ Dark mode preserved across puzzle
 - ✅ 0 JavaScript errors
 
 ## Prioritized Backlog
 
 ### P1
-- Puzzle & "Tebak Doa" games (currently marked "Segera hadir")
+- **Tebak Doa** game (multiple choice: given terjemahan → pick doa name)
+- Prerecorded Arabic audio (Web Speech API pronunciation limited)
 - Font size setting implementation
-- Better audio: prerecorded Arabic audio (Web Speech API pronunciation limited)
-- Push perubahan ke GitHub via "Save to Github" agar Vercel auto-deploy
+- Push perubahan ke GitHub via "Save to Github" untuk Vercel auto-deploy
 
 ### P2
 - Daily reminder notifications (PWA push)
-- Leaderboard (needs backend)
 - QR code printable card (parent/teacher shareable)
-- Custom illustrations per doa (currently uses category emoji)
+- Puzzle difficulty levels (easy/medium/hard by word count)
 
 ### P3
 - Multi-language (English translations)
 - Voice recognition — anak baca, app cek pronunciation
+- Leaderboard (needs backend + auth)
+
+## Environment
+- `EMERGENT_LLM_KEY` in `/app/backend/.env` for Gemini Nano Banana
+- Backend: minimal FastAPI at `/api/health` only
+- Frontend: static PWA served via `serve` on port 3000
 
 ## File Structure
 ```
 /app/
-├── index.html              # SVG icons + character splash + Google Fonts
-├── style.css               # Elegant Islamic design v3 (Emerald+Gold)
-├── script_main.js          # Scene mapping, avatar selection, share, streak
-├── manifest.json           # PWA config
-├── service-worker.js       # Offline cache v2
-├── data/doa.json           # 56 doa (CJK cleaned)
-├── quiz_data.json          # 20 questions
+├── index.html
+├── style.css                   # v3 elegant Islamic + puzzle styles
+├── script_main.js              # + Puzzle game + custom illustrations
+├── manifest.json
+├── service-worker.js           # v3 cache
+├── data/doa.json               # 56 doa
+├── quiz_data.json
+├── scripts/generate_illustrations.py  # Batch generator (one-time)
 ├── assets/
-│   ├── characters/         # boy.webp, girl.webp
-│   ├── scenes/             # night-village, masjid, study-room .webp
-│   └── icons/              # 8 PNG + 3 SVG
-├── backend/server.py       # /api/health
-└── frontend/package.json   # serve on port 3000
+│   ├── characters/             # boy.webp, girl.webp
+│   ├── scenes/                 # (legacy) 3 category scenes
+│   ├── doa/                    # 56 AI-generated per-doa illustrations
+│   └── icons/                  # PWA icons (PNG + SVG)
+├── backend/server.py
+├── memory/PRD.md
+└── frontend/package.json       # static server
+```
+
+## AI Generation Note
+Illustrations generated via `emergentintegrations` library. Regenerate a single doa:
+```bash
+cd /app && python3 -c "import asyncio; from scripts.generate_illustrations import generate_one, DOA_PROMPTS; asyncio.run(generate_one(DOA_ID, 'Name', DOA_PROMPTS[DOA_ID]))"
 ```

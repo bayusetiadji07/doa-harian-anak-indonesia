@@ -4,7 +4,7 @@
  */
 
 // Cache name
-const CACHE_NAME = 'doa-harian-v2';
+const CACHE_NAME = 'doa-harian-v3';
 
 // Files to cache
 const STATIC_ASSETS = [
