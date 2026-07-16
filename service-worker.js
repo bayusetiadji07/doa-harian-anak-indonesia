@@ -4,18 +4,18 @@
  */
 
 // Cache name
-const CACHE_NAME = 'doa-harian-v1';
+const CACHE_NAME = 'doa-harian-v2';
 
 // Files to cache
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/style.css',
-  '/script.js',
+  '/script_main.js',
   '/data/doa.json',
   '/manifest.json',
-  '/assets/icons/icon-192x192.png',
-  '/assets/icons/icon-512x512.png'
+  '/assets/icons/icon-192x192.svg',
+  '/assets/icons/icon-512x512.svg'
 ];
 
 // Install event - cache static assets

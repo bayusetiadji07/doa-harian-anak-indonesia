@@ -1174,3 +1174,140 @@ img { max-width: 100%; display: block; }
 .mb-lg { margin-bottom: 24px; }
 .mb-xl { margin-bottom: 32px; }
 .p-xl { padding: 32px; }
+
+
+/* === Switch Toggle === */
+.switch { position: relative; display: inline-block; width: 52px; height: 28px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #cbd5e1;
+  border-radius: 28px;
+  transition: 0.3s;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 22px; height: 22px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.3s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.switch input:checked ~ ::before,
+.switch:has(input:checked)::before { background: var(--sky-blue); }
+.switch:has(input:checked)::after { transform: translateX(24px); }
+
+/* === Streak Badge === */
+.streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #FB923C, #FBBF24);
+  color: white;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.35);
+}
+
+/* === Share Button === */
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--sky-blue), var(--mint-green));
+  color: white;
+  border-radius: 24px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.share-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(56, 189, 248, 0.4); }
+.share-btn:active { transform: translateY(0); }
+
+/* === Dark Mode === */
+body.dark-mode {
+  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+  color: #E2E8F0;
+}
+body.dark-mode {
+  --text-dark: #F1F5F9;
+  --text-medium: #CBD5E1;
+  --text-light: #94A3B8;
+  --bg-white: #1E293B;
+  --bg-light: #0F172A;
+  --shadow-soft: 0 4px 15px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+body.dark-mode .header {
+  background: rgba(30, 41, 59, 0.95);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+body.dark-mode .header-title { color: #F1F5F9; }
+body.dark-mode .menu-card,
+body.dark-mode .doa-card,
+body.dark-mode .info-card,
+body.dark-mode .stat-item,
+body.dark-mode .quiz-question-card,
+body.dark-mode .game-card,
+body.dark-mode .progress-stat-card,
+body.dark-mode .badge-item,
+body.dark-mode .doa-arab-section,
+body.dark-mode .audio-player-section,
+body.dark-mode .doa-translation,
+body.dark-mode .bottom-nav,
+body.dark-mode .filter-chip,
+body.dark-mode .search-container,
+body.dark-mode .quiz-option {
+  background: #1E293B !important;
+  color: #E2E8F0 !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+body.dark-mode .doa-card-title,
+body.dark-mode .menu-card-label,
+body.dark-mode .info-card-header,
+body.dark-mode .info-card-content,
+body.dark-mode .doa-arab,
+body.dark-mode .doa-latin,
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4 {
+  color: #F1F5F9 !important;
+}
+body.dark-mode .doa-card-category,
+body.dark-mode .stat-label,
+body.dark-mode .text-secondary,
+body.dark-mode .nav-label,
+body.dark-mode .progress-stat-label,
+body.dark-mode .badge-name,
+body.dark-mode .audio-hint,
+body.dark-mode .quiz-progress-text {
+  color: #94A3B8 !important;
+}
+body.dark-mode .search-input {
+  background: transparent !important;
+  color: #F1F5F9 !important;
+}
+body.dark-mode .search-input::placeholder { color: #64748B; }
+body.dark-mode .filter-chip.active {
+  background: linear-gradient(135deg, var(--sky-blue), var(--lavender)) !important;
+  color: white !important;
+}
+body.dark-mode .nav-item.active .nav-icon,
+body.dark-mode .nav-item.active .nav-label { color: var(--sky-blue) !important; }
+body.dark-mode .quiz-option:hover { background: #334155 !important; }
+body.dark-mode .btn-secondary {
+  background: #334155 !important;
+  color: #F1F5F9 !important;
+}
+body.dark-mode .splash-screen { background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%); }
+
+/* Dark mode transitions */
+body, .header, .menu-card, .doa-card, .info-card, .bottom-nav, .filter-chip, .nav-item {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}

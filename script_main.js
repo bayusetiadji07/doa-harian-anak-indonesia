@@ -17,8 +17,11 @@ const STORAGE_KEYS = {
   FAVORITES: 'doa_harian_favorites',
   PROGRESS: 'doa_harian_progress',
   SETTINGS: 'doa_harian_settings',
-  XP: 'doa_harian_xp'
+  XP: 'doa_harian_xp',
+  STREAK: 'doa_harian_streak'
 };
+
+App.streak = { count: 0, lastDate: null };
 
 let currentFilter = 'all';
 
@@ -60,7 +63,32 @@ function loadUserData() {
   App.settings = sett ? JSON.parse(sett) : {darkMode: false, fontSize: 'medium'};
   const xp = localStorage.getItem(STORAGE_KEYS.XP);
   App.xp = xp ? parseInt(xp) : 0;
+  const streak = localStorage.getItem(STORAGE_KEYS.STREAK);
+  App.streak = streak ? JSON.parse(streak) : { count: 0, lastDate: null };
+
+  // Apply dark mode on load
+  if (App.settings.darkMode) {
+    document.body.classList.add('dark-mode');
+  }
+  // Update streak on visit
+  updateStreak();
 }
+
+function updateStreak() {
+  const today = new Date().toISOString().slice(0, 10);
+  const last = App.streak.lastDate;
+  if (last === today) return; // same day, no change
+  if (last) {
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    App.streak.count = last === yesterday ? App.streak.count + 1 : 1;
+  } else {
+    App.streak.count = 1;
+  }
+  App.streak.lastDate = today;
+  saveStreak();
+}
+
+function saveStreak() { localStorage.setItem(STORAGE_KEYS.STREAK, JSON.stringify(App.streak)); }
 
 function saveFavorites() { localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(App.favorites)); }
 function saveProgress() { localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(App.progress)); }
@@ -135,7 +163,7 @@ function renderHomePage() {
   const memorized = Object.keys(App.progress).filter(id => App.progress[id] === 'memorized').length;
   const total = App.doaList.length;
   
-  app.innerHTML = '<div class="main-content"><div class="hero-section animate-fade-in"><div class="hero-illustration">👦👧</div><h1 class="hero-title">Doa Harian Anak Indonesia</h1><p class="hero-subtitle">Ayo Belajar Doa Setiap Hari</p></div><div class="stats-bar"><div class="stat-item"><div class="stat-value">' + memorized + '</div><div class="stat-label">Sudah Hafal</div></div><div class="stat-item"><div class="stat-value">' + total + '</div><div class="stat-label">Total Doa</div></div><div class="stat-item"><div class="stat-value">' + (App.favorites?.length || 0) + '</div><div class="stat-label">Favorit</div></div></div><div class="section-title"><h2>Pilih Kategori</h2></div><div class="grid-container" id="menuGrid"></div></div>';
+  app.innerHTML = '<div class="main-content"><div class="hero-section animate-fade-in"><div class="hero-illustration">👦👧</div><h1 class="hero-title">Doa Harian Anak Indonesia</h1><p class="hero-subtitle">Ayo Belajar Doa Setiap Hari</p>' + (App.streak.count > 0 ? '<div style="margin-top:16px;"><span class="streak-badge">🔥 ' + App.streak.count + ' hari beruntun</span></div>' : '') + '</div><div class="stats-bar"><div class="stat-item"><div class="stat-value">' + memorized + '</div><div class="stat-label">Sudah Hafal</div></div><div class="stat-item"><div class="stat-value">' + total + '</div><div class="stat-label">Total Doa</div></div><div class="stat-item"><div class="stat-value">' + (App.favorites?.length || 0) + '</div><div class="stat-label">Favorit</div></div></div><div class="section-title"><h2>Pilih Kategori</h2></div><div class="grid-container" id="menuGrid"></div></div>';
   
   const grid = document.getElementById('menuGrid');
   if (!grid) return;
@@ -607,7 +635,41 @@ function renderProgressPage() {
   const level = Math.floor(xp / 100) + 1;
   const pct = Math.round((memorized / total) * 100);
   
-  app.innerHTML = '<div class="main-content"><div class="progress-header"><div class="progress-avatar">👦</div><div class="progress-level">Level ' + level + '</div><div class="progress-xp">' + xp + ' XP</div></div><div class="progress-stats"><div class="progress-stat-card"><div class="progress-stat-value">' + memorized + '</div><div class="progress-stat-label">Sudah Hafal</div></div><div class="progress-stat-card"><div class="progress-stat-value">' + total + '</div><div class="progress-stat-label">Total Doa</div></div><div class="progress-stat-card"><div class="progress-stat-value">' + pct + '%</div><div class="progress-stat-label">Progress</div></div></div><h3 class="mb-md">🏆 Badge</h3><div class="badge-grid"><div class="badge-item ' + (memorized >= 10 ? 'unlocked' : '') + '"><div class="badge-icon">🥉</div><span class="badge-name">Hafidz Pemula</span></div><div class="badge-item ' + (memorized >= 25 ? 'unlocked' : '') + '"><div class="badge-icon">🥈</div><span class="badge-name">Hafidz Hebat</span></div><div class="badge-item ' + (memorized >= 50 ? 'unlocked' : '') + '"><div class="badge-icon">🥇</div><span class="badge-name">Hafidz Cilik</span></div><div class="badge-item ' + (memorized >= 56 ? 'unlocked' : '') + '"><div class="badge-icon">👑</div><span class="badge-name">Bintang Doa</span></div></div></div>';
+  app.innerHTML = '<div class="main-content"><div class="progress-header"><div class="progress-avatar">👦</div><div class="progress-level">Level ' + level + '</div><div class="progress-xp">' + xp + ' XP</div>' + (App.streak.count > 0 ? '<div style="margin-top:12px;"><span class="streak-badge">🔥 ' + App.streak.count + ' hari beruntun</span></div>' : '') + '</div><div class="progress-stats"><div class="progress-stat-card"><div class="progress-stat-value">' + memorized + '</div><div class="progress-stat-label">Sudah Hafal</div></div><div class="progress-stat-card"><div class="progress-stat-value">' + total + '</div><div class="progress-stat-label">Total Doa</div></div><div class="progress-stat-card"><div class="progress-stat-value">' + pct + '%</div><div class="progress-stat-label">Progress</div></div></div><div style="text-align:center;margin:20px 0;"><button class="share-btn" onclick="shareProgress()"><span>📤</span><span>Bagikan Progress</span></button></div><h3 class="mb-md">🏆 Badge</h3><div class="badge-grid"><div class="badge-item ' + (memorized >= 10 ? 'unlocked' : '') + '"><div class="badge-icon">🥉</div><span class="badge-name">Hafidz Pemula</span></div><div class="badge-item ' + (memorized >= 25 ? 'unlocked' : '') + '"><div class="badge-icon">🥈</div><span class="badge-name">Hafidz Hebat</span></div><div class="badge-item ' + (memorized >= 50 ? 'unlocked' : '') + '"><div class="badge-icon">🥇</div><span class="badge-name">Hafidz Cilik</span></div><div class="badge-item ' + (memorized >= 56 ? 'unlocked' : '') + '"><div class="badge-icon">👑</div><span class="badge-name">Bintang Doa</span></div><div class="badge-item ' + (App.streak.count >= 7 ? 'unlocked' : '') + '"><div class="badge-icon">🔥</div><span class="badge-name">Streak 7 Hari</span></div><div class="badge-item ' + (App.streak.count >= 30 ? 'unlocked' : '') + '"><div class="badge-icon">⚡</div><span class="badge-name">Streak 30 Hari</span></div></div></div>';
+}
+
+// Share Progress Feature
+async function shareProgress() {
+  const memorized = Object.keys(App.progress).filter(id => App.progress[id] === 'memorized').length;
+  const total = App.doaList.length;
+  const xp = App.xp || 0;
+  const level = Math.floor(xp / 100) + 1;
+  const pct = Math.round((memorized / total) * 100);
+
+  const text = '📿 Progress Belajar Doa Harian Saya:\n' +
+    '⭐ Level ' + level + ' (' + xp + ' XP)\n' +
+    '📚 ' + memorized + '/' + total + ' doa hafal (' + pct + '%)\n' +
+    '🔥 Streak: ' + App.streak.count + ' hari\n\n' +
+    'Yuk belajar doa bareng di: ' + window.location.origin;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Progress Doa Harian', text: text });
+      showToast('Berhasil dibagikan!', 'success');
+    } catch (err) {
+      if (err.name !== 'AbortError') fallbackShare(text);
+    }
+  } else {
+    fallbackShare(text);
+  }
+}
+
+function fallbackShare(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Progress disalin ke clipboard!', 'success');
+  }).catch(() => {
+    showToast('Tidak bisa membagikan', 'error');
+  });
 }
 
 // ================================================
@@ -631,9 +693,11 @@ function resetProgress() {
     App.progress = {};
     App.favorites = [];
     App.xp = 0;
+    App.streak = { count: 0, lastDate: null };
     saveProgress();
     saveFavorites();
     saveXP();
+    saveStreak();
     showToast('Progress direset', 'info');
     renderSettingsPage();
   }
